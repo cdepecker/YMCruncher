@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="YMCruncher" basedir="." default="main">
+
+	<!-- dynamic properties -->
+	<property name="version"     	value="0.8"/>
+
+	<!-- static properties -->
+	<property name="src.dir"     	value="src"/>
+	<property name="build.dir"   	value="build"/>
+	<property name="templates.dir"  value="templates"/>	
+	<property name="classes.dir"	value="${build.dir}/classes"/>
+	<property name="bin.dir" 		value="${build.dir}/bin"/>
+	<property name="jar.dir"     	value="${build.dir}/jar"/>
+	<property name="lib.dir"     	value="lib"/>
+	<property name="install.dir"    value="${build.dir}/install"/>
+	<property name="main-class"  	value="YMCruncher"/>
+
+	<!-- paths -->
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+		
+		<!-- 	This is ugly, but we just need one to compile the YMCruncher against the swt lib
+			regardless of what the OS will be -->
+		<fileset dir="${templates.dir}/windows/lib" includes="**/*.jar"/>
+	</path>
+	<path id="classpath-native">
+			<fileset dir="${lib.dir}" includes="**/*.jar"/>
+			
+			<!-- 	This is ugly, but we just need one to compile the YMCruncher against the swt lib
+				regardless of what the OS will be -->
+			<fileset dir="${templates.dir}/windows/lib" includes="**/*.jar"/>
+			
+			<!-- Needed for native compilation -->
+			<fileset dir="${jar.dir}" includes="**/*.jar"/>
+	</path>
+
+	<path id="java.library.path">
+		<dirset dir="${lib.dir}"/>
+	</path>
+
+	<!-- clean -->
+    <target description="Clean the build directory" name="clean">
+    	<echo message="===== Clean build directory."/>
+        <delete dir="${build.dir}"/>
+    </target>
+
+	<!-- compile -->
+	<target description="Compile java classes" name="compile">
+    	<echo message="===== Compile java classes."/>
+		<mkdir dir="${classes.dir}"/>
+	    <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" excludes="ExtractSamples.java,Plugins/Sndh*.java,Plugins/Mod*.java" />
+	</target>
+	
+	<!-- Plugins jar creation -->
+    <target description="Create Plugins Jar" name="jar-Plugins" depends="compile">
+    	<echo message="===== Create Plugins package."/>    	
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/Plugins.jar" basedir="${classes.dir}" includes="Plugins/**" excludes="Plugins/Mod*.class,Plugins/Sndh*.class,Plugins/j68k/*.class"/>
+    </target>
+	
+	<!-- YMCruncher jar creation -->
+    <target description="Create YMCruncher Jar" name="jar-YMCruncher" depends="compile">
+    	<echo message="===== Create YMCruncher package."/>    	    	
+        <mkdir dir="${jar.dir}"/>
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}" excludes="Plugins/**">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            	<attribute name="Class-Path" value="Plugins.jar ${lib.dir}/lha.jar ${lib.dir}/swt.jar ."/>
+            </manifest>
+        </jar>
+    </target>
+	
+	
+	<!-- Installation -->
+	<target description="Install Jar - Windows release" name="install-windows" depends="jar">
+      <echo message="===== Windows installation."/>    	
+	  <antcall target="install-template">
+	    <param name="os" value="windows"/>
+	  </antcall>
+	</target>
+	<target description="Install Jar - Linux release" name="install-linux" depends="jar">
+      <echo message="===== Linux installation."/>
+	  <antcall target="install-template">
+	    <param name="os" value="linux"/>
+	  </antcall>
+	</target>
+	<target description="Install Jar - Solaris release" name="install-solaris-sparc" depends="jar">
+	  <echo message="===== Solaris installation."/>		
+	  <antcall target="install-template">
+	    <param name="os" value="solaris-sparc"/>
+	  </antcall>
+	</target>	
+	<target description="Install Jar - Other OS release" name="install-other" depends="jar">
+	  <echo message="===== Other OS installation."/>		
+	  <antcall target="install-template">
+	    <param name="os" value="otherOS"/>
+	  </antcall>
+	</target>	
+	<target if="os" name="install-template">	
+			<!-- main jar -->
+			<copy todir="${build.dir}/install/YMCruncher${version}_${os}_jar">
+				<fileset dir="${jar.dir}"/>	
+			</copy>
+			<!-- Libraries -->
+			<copy file="${lib.dir}/lha.jar" todir="${build.dir}/install/YMCruncher${version}_${os}_jar/lib"/>								
+			<!-- Templates -->
+			<copy todir="${build.dir}/install/YMCruncher${version}_${os}_jar">
+				<fileset dir="${templates.dir}/${os}"/>	
+			</copy>
+			<!-- Releases notes-->
+			<copy file="Releases_Notes.txt" todir="${build.dir}/install/YMCruncher${version}_${os}_jar"/>				
+			<!-- YM2 digidrums-->
+			<copy file="YM2_digidrums.dat" todir="${build.dir}/install/YMCruncher${version}_${os}_jar"/>				
+    </target>
+	
+	
+	<!--
+		*********************
+		*	NATIVE COMPIL	*
+		*********************
+	-->
+	
+	<target description="Native build - windows" name="native-make-common" depends="install-windows">
+			<mkdir dir="${bin.dir}"/>
+		  <!-- Build :
+		  		- common libraries 
+		  		- common jars
+		  	-->
+			<apply executable="gcj" dir="${bin.dir}" dest="${bin.dir}" parallel="false">
+			  <arg value="-fjni"/>
+			  <arg value="-CLASSPATH"/><arg pathref="classpath-native"/>
+			  <arg value="-c"/><srcfile/>
+			  <arg value="-o"/><targetfile/>
+			  <fileset dir="${lib.dir}" includes="*.jar" excludes="Chart2D.jar,JEmu2.jar"/>
+			  <fileset dir="${jar.dir}" includes="*.jar" excludes="Plugins.jar"/>
+			  <mapper type="glob" from="*.jar" to="*.o"/>
+			</apply>
+		
+		<!-- Build Plugins library -->
+		<apply executable="gcj" dir="${bin.dir}" dest="${bin.dir}" parallel="false">
+					  <arg value="-fjni"/>
+					  <arg value="-CLASSPATH"/><arg pathref="classpath-native"/>
+					  <arg value="-c"/><srcfile/>
+			  		  <!--<arg value="-shared"/>-->			
+					  <arg value="-o"/><targetfile/>
+					  <filelist dir="${jar.dir}"><file name="Plugins.jar"/></filelist>			
+					  <mapper type="glob" from="*.jar" to="*.o"/>
+		</apply>
+	</target>
+			  	
+	<target description="Native link - Windows" name="native-windows" depends="native-make-common">		
+		<!-- Build the native swt library -->
+		  <antcall target="native_swt_template">
+		    <param name="os" value="windows"/>
+		  </antcall>
+		<!-- Build the native executable -->
+		  <antcall target="native_link_windows">
+		    <param name="os" value="windows"/>
+		  </antcall>
+	</target>
+	
+	<!-- native swt lib template -->
+	<target if="os" name="native_swt_template">
+		<apply executable="gcj" dir="${bin.dir}" dest="${bin.dir}" parallel="false">
+		  <arg value="-fjni"/>
+		  <arg value="-CLASSPATH"/><arg pathref="classpath-native"/>
+		  <arg value="-c"/><srcfile/>
+		  <arg value="-o"/><targetfile/>
+		  <fileset dir="${templates.dir}/${os}/lib" includes="*.jar"/>
+		  <mapper type="glob" from="*.jar" to="*.o"/>
+		</apply>
+	</target>
+	
+	<target if="os" name="native_link_windows">
+				<delete file="${bin.dir}/${ant.project.name}.exe"/>
+				<copydir dest="${bin.dir}" src="${templates.dir}/${os}/lib" excludes="*.jar"/>
+				<apply executable="gcj" dir="${bin.dir}" dest="${bin.dir}" parallel="true">
+				  <arg value="-L."/>
+				  <arg value="-lswt-win32-3235"/>
+				  <arg value="--main=${ant.project.name}"/>
+				  <arg value="-o"/><arg value="${ant.project.name}"/><srcfile/>
+				  <fileset dir="${bin.dir}" includes="*.o"/>
+				  <mapper type="glob" from="*.o" to="*.exe"/>
+				</apply>
+		</target>
+	
+	<!-- strip the executable -->
+	<target name="strip" depends="native-windows">
+		<apply executable="strip" parallel="false">
+				<srcfile/>
+				<fileset dir="${bin.dir}" includes="*.exe"/>
+		</apply>
+	</target>
+
+	<!-- pack executable if needed -->
+	<target description="Native pack - Windows" name="pack" depends="strip">
+			<apply executable="upx" dir="${bin.dir}" parallel="false">
+				<arg value="-9"/>
+				<srcfile/>
+				<fileset dir="${bin.dir}" includes="*.exe"/>
+			</apply>
+	</target>
+
+	<target description="Install Bin - Windows release" name="native_install_windows" depends="pack">		
+	<!-- Copy executable to native install path -->
+		<antcall target="native_install_template">
+		   <param name="os" value="windows"/>
+		</antcall>
+	</target>
+	
+	<target if="os" name="native_install_template">	
+		<!-- main exe -->
+		<copy file="${bin.dir}/${ant.project.name}.exe" todir="${build.dir}/install/YMCruncher${version}_${os}_binary"/>								
+		<!-- swt libraries -->
+		<copy todir="${build.dir}/install/YMCruncher${version}_${os}_binary">
+			<fileset dir="${templates.dir}/${os}/lib" includes="**.dll,**.so"/>	
+		</copy>
+		<!-- Releases notes-->
+		<copy file="Releases_Notes.txt" todir="${build.dir}/install/YMCruncher${version}_${os}_binary"/>	
+		<!-- YM2 digidrums-->
+		<copy file="YM2_digidrums.dat" todir="${build.dir}/install/YMCruncher${version}_${os}_binary"/>									
+    </target>
+	
+	
+	<!-- target definitions and depends -->
+	<target description="Compile all Jars" name="jar" depends="jar-YMCruncher,jar-Plugins"/>
+    <target description="Clean and Compile Jars" name="main" depends="clean,jar"/>
+    <target description="Install all Jars" name="install" depends="install-windows, install-linux, install-solaris-sparc, install-other"/>
+</project>

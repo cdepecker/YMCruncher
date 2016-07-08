@@ -1,0 +1,71 @@
+#############################
+# YMCruncher Releases Notes #
+#############################
+
+Version 0.8.7 (unreleased)
++ The SpecialFx semi-period is now encoded in a different file and only the number of the sid to be played is stored in the register
++ Fixed Reg6 bug
+
+Version 0.8.6 (unreleased)
++ VGM sound output level fixed (Output levels have been increased - should be more accurate).
++ MYM Input Plugin added (assume that the MYM file is encoded for Atari ST AY chip frequency 2.000.000Hz)
++ Added basic "Wav" output plugin.
++ Added options for output plugins (YM, AYC, WAVE)
++ AYC output generates AYL files for ATARI ST digidrums (see 1), and the info to replay them is stored in the registers 1(3),8+voice,14(15)
+	+ Reg 1(3) = zzyyxxxx (8bits)
+		+ xxxx is Reg1 value
+		+ zz is the channel (00: no effect, 01: A, 10: B, 11: C)
+		+ yy is the effect type (00: SIDVOICE, 01: DIGIDRUM, 10: SINUSSID, 11: SYNCBUZZER)
+	+ Reg 8+voice = pppyxxxx (8bits)
+		+ yxxxx is Reg8 value (when SIDVOICE or SINUSSID, xxxx is the max value of the volume, and when SYNCBUZZER, xxxx is the envelope pattern to use)
+		+ ppp is the timmer predivisor index 'tp' (see 2)
+	+ Reg 14(15) = xxxxxxxx (8bits)
+		+ xxxxxxxx is the timmer counter value 'tc' (see 2)
+- Note : 
+	(1) Theoritically, YMs can play a digidrum with different frequencies,
+	however YMCruncher generates the AYL list on the assumption that 
+	this drum is going to be played always at the same frequency
+	and translates it to a 15600hz sample using the first rate he finds
+	in the chiptune for that drum. 
+	
+	(2) those tp/tc parameters (11 bits) have been replaced in this version by a 'step value'
+	in order to ease the player implementation. This 11 bits value looks like pppcccccccc (ppp for tp, cccccccc for tc).
+	I use it that way :
+	1 - left shift * 5 -> pppccccc ccc00000 (16 bit value)
+	2 - for each HBL you prepare, keep adding it to a 16 bits counter and when the carry flag is set, it's time to swap volume level (SIDVoice !)  
+	3 - That's it, easy !
+Version 0.8
++ Added VGM input plugin, so you can convert tunes coming from the famous Sega Master System to AYC
++ Added support for Drag and Drop.
++ Removed code to handle chiptunes that where recorded with an other rate than the cpc common replay rate (50hz) -> This has to be handled at play-time
+In progress:
+- Tune editing
+- Atari Special FX support (and 6128plus player)
+Would be nice to have:
+- Symbos player or Symamp plugin
+- Conversion to AY-List that can be replayed with a cpc+
+- Other chiptune format support
+
+Version 0.7
++ A bug in the conversion of an interleaved  YM5 or YM6 chiptune has been fixed
++ Frequency conversion to CPC (1000000Hz) is now a bit more accurate
++ Added code to handle chiptunes that where recorded with an other rate than the cpc common replay rate (50hz) - [Experimental]
++ Added an optional "Filter" to allow disabling of sound/noise output on a channel (checkbox unchecked means disabled). Only Register 7 is modified, this feature can help for debugging wrong frequency conversion between different machines.
++ Added a YM output plugin (to test YM frequency conversion within the same player as the original chiptune)
++ Port for Linux & Solaris-sparc OS with fixed file-list display error.
+missing features:
+- Conversion to AY-List that can be replayed with a cpc+
+- Atari Special FX support
+- Other chiptune format support
+
+Version 0.6
++ The AYC crunching mechanism has been improved to be much more faster than it was
++ A warning is displayed in the logfile of the crunched file to signal that the chiptune may be played incorrectly due to missing SpecialFX
+
+Version 0.5
++ A bug in the frequency conversion for VTX chiptunes which resulted in a chiptune played at a wrong frequency has been fixed.
++ Making logfiles a bit more readable
+
+Version 0.4 - first release
++ Corrected wrong frequency conversion of noise register from AYC kit.
++ Enhancement of the compression ratio (AYC kit seemed to look only for BufferSize-1 data in Buffer whereas YMCruncher is looking for BufferSize data)

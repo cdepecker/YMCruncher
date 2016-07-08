@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>YMCruncher</groupId>
+  <artifactId>YMCruncher</artifactId>
+  <version>0.8.7</version>
+   
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>YMCruncher</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+  </build>
+  <dependencies>
+  	<dependency>
+  		<groupId>lha</groupId>
+  		<artifactId>lha</artifactId>
+  		<version>1.0.0</version>
+   		<scope>system</scope>
+    	<systemPath>${project.basedir}/lib/lha.jar</systemPath>
+  	</dependency>
+	<dependency>
+	    <groupId>org.eclipse.swt</groupId>
+	    <artifactId>org.eclipse.swt.win32.win32.x86</artifactId>
+  		<version>3235</version>
+   		<scope>system</scope>
+    	<systemPath>${project.basedir}/lib/swt.jar</systemPath>
+	</dependency>	  	
+  </dependencies>
+</project>
