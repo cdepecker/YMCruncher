@@ -10,7 +10,7 @@ Using SWT java GUI Framework.
 
 How to build :
 --------------
-Use mave install
+Use maven install
 
 How to run :
 ------------
