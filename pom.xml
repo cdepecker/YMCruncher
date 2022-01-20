@@ -3,12 +3,25 @@
   <groupId>YMCruncher</groupId>
   <artifactId>YMCruncher</artifactId>
   <version>0.8.7</version>
-   
-  <properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <properties>
     <maven.compiler.source>1.6</maven.compiler.source>
     <maven.compiler.target>1.6</maven.compiler.target>
   </properties>
-   
+
+<!--
   <build>
     <sourceDirectory>src</sourceDirectory>
 		<plugins>
@@ -18,13 +31,13 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>YMCruncher</mainClass>
+							<mainClass>ymcruncher.YMCruncher</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
 			</plugin>
 		</plugins>
-  </build>
+  </build>-->
   <dependencies>
   	<dependency>
   		<groupId>lha</groupId>
@@ -39,6 +52,12 @@
   		<version>3235</version>
    		<scope>system</scope>
     	<systemPath>${project.basedir}/lib/swt.jar</systemPath>
-	</dependency>	  	
+	</dependency>
+      <dependency>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter</artifactId>
+          <version>RELEASE</version>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 </project>

@@ -1,5 +1,5 @@
 #############################
-# YMCruncher Releases Notes #
+# main.YMCruncher Releases Notes #
 #############################
 
 Version 0.8.7 (unreleased)
@@ -23,7 +23,7 @@ Version 0.8.6 (unreleased)
 		+ xxxxxxxx is the timmer counter value 'tc' (see 2)
 - Note : 
 	(1) Theoritically, YMs can play a digidrum with different frequencies,
-	however YMCruncher generates the AYL list on the assumption that 
+	however main.YMCruncher generates the AYL list on the assumption that
 	this drum is going to be played always at the same frequency
 	and translates it to a 15600hz sample using the first rate he finds
 	in the chiptune for that drum. 
@@ -68,4 +68,4 @@ Version 0.5
 
 Version 0.4 - first release
 + Corrected wrong frequency conversion of noise register from AYC kit.
-+ Enhancement of the compression ratio (AYC kit seemed to look only for BufferSize-1 data in Buffer whereas YMCruncher is looking for BufferSize data)
++ Enhancement of the compression ratio (AYC kit seemed to look only for BufferSize-1 data in Buffer whereas main.YMCruncher is looking for BufferSize data)

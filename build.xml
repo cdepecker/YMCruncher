@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="YMCruncher" basedir="." default="main">
+<project name="ymcruncher.YMCruncher" basedir="." default="main">
 
 	<!-- dynamic properties -->
 	<property name="version"     	value="0.8"/>
@@ -13,20 +13,20 @@
 	<property name="jar.dir"     	value="${build.dir}/jar"/>
 	<property name="lib.dir"     	value="lib"/>
 	<property name="install.dir"    value="${build.dir}/install"/>
-	<property name="main-class"  	value="YMCruncher"/>
+	<property name="main-class"  	value="ymcruncher.YMCruncher"/>
 
 	<!-- paths -->
 	<path id="classpath">
 		<fileset dir="${lib.dir}" includes="**/*.jar"/>
 		
-		<!-- 	This is ugly, but we just need one to compile the YMCruncher against the swt lib
+		<!-- 	This is ugly, but we just need one to compile the main.YMCruncher against the swt lib
 			regardless of what the OS will be -->
 		<fileset dir="${templates.dir}/windows/lib" includes="**/*.jar"/>
 	</path>
 	<path id="classpath-native">
 			<fileset dir="${lib.dir}" includes="**/*.jar"/>
 			
-			<!-- 	This is ugly, but we just need one to compile the YMCruncher against the swt lib
+			<!-- 	This is ugly, but we just need one to compile the main.YMCruncher against the swt lib
 				regardless of what the OS will be -->
 			<fileset dir="${templates.dir}/windows/lib" includes="**/*.jar"/>
 			
@@ -48,24 +48,24 @@
 	<target description="Compile java classes" name="compile">
     	<echo message="===== Compile java classes."/>
 		<mkdir dir="${classes.dir}"/>
-	    <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" excludes="ExtractSamples.java,Plugins/Sndh*.java,Plugins/Mod*.java" />
+	    <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" excludes="ymcruncher.ExtractSamples.java,main.Plugins/Sndh*.java,main.Plugins/Mod*.java" />
 	</target>
 	
-	<!-- Plugins jar creation -->
-    <target description="Create Plugins Jar" name="jar-Plugins" depends="compile">
-    	<echo message="===== Create Plugins package."/>    	
+	<!-- main.Plugins jar creation -->
+    <target description="Create ymcruncher.plugins Jar" name="jar-ymcruncher.plugins" depends="compile">
+    	<echo message="===== Create ymcruncher.plugins package."/>
         <mkdir dir="${jar.dir}"/>
-        <jar destfile="${jar.dir}/Plugins.jar" basedir="${classes.dir}" includes="Plugins/**" excludes="Plugins/Mod*.class,Plugins/Sndh*.class,Plugins/j68k/*.class"/>
+        <jar destfile="${jar.dir}/Plugins.jar" basedir="${classes.dir}" includes="main.Plugins/**" excludes="main.Plugins/Mod*.class,main.Plugins/Sndh*.class,main.Plugins/j68k/*.class"/>
     </target>
 	
-	<!-- YMCruncher jar creation -->
-    <target description="Create YMCruncher Jar" name="jar-YMCruncher" depends="compile">
-    	<echo message="===== Create YMCruncher package."/>    	    	
+	<!-- main.YMCruncher jar creation -->
+    <target description="Create ymcruncher.YMCruncher Jar" name="jar-ymcruncher.YMCruncher" depends="compile">
+    	<echo message="===== Create ymcruncher.YMCruncher package."/>
         <mkdir dir="${jar.dir}"/>
-        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}" excludes="Plugins/**">
+        <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}" excludes="main.Plugins/**">
             <manifest>
                 <attribute name="Main-Class" value="${main-class}"/>
-            	<attribute name="Class-Path" value="Plugins.jar ${lib.dir}/lha.jar ${lib.dir}/swt.jar ."/>
+            	<attribute name="Class-Path" value="ymcruncher.plugins.jar ${lib.dir}/lha.jar ${lib.dir}/swt.jar ."/>
             </manifest>
         </jar>
     </target>
@@ -132,18 +132,18 @@
 			  <arg value="-c"/><srcfile/>
 			  <arg value="-o"/><targetfile/>
 			  <fileset dir="${lib.dir}" includes="*.jar" excludes="Chart2D.jar,JEmu2.jar"/>
-			  <fileset dir="${jar.dir}" includes="*.jar" excludes="Plugins.jar"/>
+			  <fileset dir="${jar.dir}" includes="*.jar" excludes="ymcruncher.plugins.jar"/>
 			  <mapper type="glob" from="*.jar" to="*.o"/>
 			</apply>
 		
-		<!-- Build Plugins library -->
+		<!-- Build main.Plugins library -->
 		<apply executable="gcj" dir="${bin.dir}" dest="${bin.dir}" parallel="false">
 					  <arg value="-fjni"/>
 					  <arg value="-CLASSPATH"/><arg pathref="classpath-native"/>
 					  <arg value="-c"/><srcfile/>
 			  		  <!--<arg value="-shared"/>-->			
 					  <arg value="-o"/><targetfile/>
-					  <filelist dir="${jar.dir}"><file name="Plugins.jar"/></filelist>			
+					  <filelist dir="${jar.dir}"><file name="ymcruncher.plugins.jar"/></filelist>
 					  <mapper type="glob" from="*.jar" to="*.o"/>
 		</apply>
 	</target>

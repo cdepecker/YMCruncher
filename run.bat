@@ -1,1 +1,1 @@
-java -cp target\YMCruncher-0.8.7.jar;lib\lha.jar;lib\swt.jar -Djava.library.path=lib YMCruncher
+java -cp target\main.YMCruncher-0.8.7.jar;lib\lha.jar;lib\swt.jar -Djava.library.path=lib main.YMCruncher
