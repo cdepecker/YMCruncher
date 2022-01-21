@@ -1,28 +1,28 @@
 package ymcruncher.plugins;
 
-import java.io.*;
+import com.google.auto.service.AutoService;
+import ymcruncher.core.InputPlugin;
+
+import java.io.InputStream;
 
 /**
-  * An input stream that implements a circular queue.
-  * Reading & writing block each other.
-  */
-public class QueuedInputStream extends InputStream
-{
+ * An input stream that implements a circular queue.
+ * Reading & writing block each other.
+ */
+public class QueuedInputStream extends InputStream {
+    public boolean blockUntilFull;
     private byte buf[];     // circular list of bytes
     private int bufsize;    // size of the list
     private int head;       // where next read comes from
     private int capacity;   // how many bytes in the buf
-    public boolean blockUntilFull;
-        // reading will block until at full capacity
+    // reading will block until at full capacity
 
-    QueuedInputStream(int buflen)
-    {
+    QueuedInputStream(int buflen) {
         bufsize = buflen;
         buf = new byte[buflen];
     }
 
-    public final synchronized void waitUntilEmpty()
-    {
+    public final synchronized void waitUntilEmpty() {
         try {
             while (capacity > 0)
                 wait();
@@ -30,13 +30,11 @@ public class QueuedInputStream extends InputStream
         }
     }
 
-    public final int available()
-    {
+    public final int available() {
         return capacity;
     }
 
-    public final synchronized int read()
-    {
+    public final synchronized int read() {
         try {
             while (capacity == 0 || blockUntilFull)
                 wait();
@@ -52,19 +50,16 @@ public class QueuedInputStream extends InputStream
         }
     }
 
-    public final synchronized int read(byte b[], int off, int len)
-    {
+    public final synchronized int read(byte b[], int off, int len) {
         if (len == 0)
             return 0;
         try {
-            while (capacity == 0 || blockUntilFull)
-            {
+            while (capacity == 0 || blockUntilFull) {
 //                System.out.println("wait read");
                 wait();
             }
             int numread = 0;
-            while (capacity > 0 && numread < len)
-            {
+            while (capacity > 0 && numread < len) {
                 b[off++] = buf[head];
                 if (++head == bufsize)
                     head = 0;
@@ -79,13 +74,10 @@ public class QueuedInputStream extends InputStream
         }
     }
 
-    public final synchronized void write(byte b)
-    {
+    public final synchronized void write(byte b) {
         try {
-            while (capacity == bufsize)
-            {
-                if (blockUntilFull)
-                {
+            while (capacity == bufsize) {
+                if (blockUntilFull) {
                     blockUntilFull = false;
                     notify();
                 }
@@ -99,8 +91,7 @@ public class QueuedInputStream extends InputStream
         }
     }
 
-    public final synchronized void write(byte b[], int off, int len)
-    {
+    public final synchronized void write(byte b[], int off, int len) {
         /*
         while (len-- > 0)
             write(b[off++]);
@@ -108,14 +99,11 @@ public class QueuedInputStream extends InputStream
         try {
 //            System.out.println("write " + len);
             int pos = (head + capacity) % bufsize;
-            while (len > 0)
-            {
-                if (capacity == bufsize)
-                {
+            while (len > 0) {
+                if (capacity == bufsize) {
                     blockUntilFull = false;
                     notify();
-                    while (capacity == bufsize)
-                    {
+                    while (capacity == bufsize) {
 //                        System.out.println("wait write");
                         wait();
                     }

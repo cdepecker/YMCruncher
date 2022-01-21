@@ -13,18 +13,17 @@ import ymcruncher.core.YMC_View;
 
 /**
  * Main Class (Launch the main.YMCruncher)
- * @author F-Key/RevivaL
  *
+ * @author F-Key/RevivaL
  */
-public class YMCruncher
-{
-	public static void main(String[] args)
-	{				
-		// Model 
-		YMC_Model model = new YMC_Model();
-	
-		// View
-		YMC_View view = new YMC_View(model);
-		view.displayWindow();
-	}
+public class YMCruncher {
+    public static void main(String[] args) {
+        // Model
+        YMC_Model model = new YMC_Model();
+
+        // View
+        YMC_View view = new YMC_View(model);
+        view.displayWindow();
+//        view.launch();
+    }
 }

@@ -1,9 +1,10 @@
 package ymcruncher.plugins;
 
-import java.util.Arrays;
-import java.util.Vector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -38,10 +39,10 @@ class AycOutputPluginTest implements OutputPluginTest {
 
     @Test
     void doAYCCrunch() {
-        Vector input = new Vector(Arrays.asList((byte)0, (byte)0, (byte)0, (byte)0, (byte)0x7F, (byte)0x7F, (byte)0x7F, (byte)0x7F));
-        Vector output = aycOutputPlugin.doAYCCrunch(input, 0x100);
+        ArrayList input = new ArrayList(Arrays.asList((byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0x7F, (byte) 0x7F, (byte) 0x7F, (byte) 0x7F));
+        ArrayList output = aycOutputPlugin.doAYCCrunch(input, 0x100);
         System.out.println(output);
-        Vector outputCheck = new Vector(Arrays.asList((byte)0, (byte)-96, (byte)-3, (byte)0, (byte)127, (byte)-3, (byte)4));
+        ArrayList outputCheck = new ArrayList(Arrays.asList((byte) 0, (byte) -96, (byte) -3, (byte) 0, (byte) 127, (byte) -3, (byte) 4));
         assertEquals(outputCheck, output);
     }
 }

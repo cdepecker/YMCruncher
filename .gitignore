@@ -1,1 +1,18 @@
-/target/
+# Eclipse
+.classpath
+.project
+.settings/
+# Intellij
+.idea/
+*.iml
+*.iws
+# Maven
+target/
+# Maven release plugin
+*.versionsBackup
+*.releaseBackup
+*.next
+*.tag
+release.properties
+# YM
+ym/

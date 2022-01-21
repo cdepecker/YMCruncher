@@ -1,0 +1,7 @@
+module ymcruncher{
+    requires javafx.controls;
+    requires javafx.graphics;
+    requires swt;
+    requires lha;
+    requires static com.google.auto.service;
+}

@@ -2,7 +2,7 @@ package main.Plugins;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import sun.audio.AudioStream;
 import main.YMCruncher.Chiptune;
@@ -782,11 +782,11 @@ static final int period_set_step[] =
 		 */
         
         // Create array of Frames
-        Vector<Frame> arrFrame = new Vector<Frame>();
+        ArrayList<Frame> arrFrame = new ArrayList<Frame>();
 		
 		//byte arrPSGValues[] = {0, 0, 0, 0, 0, 0, 0, (7<<3)+7, 0, 0, 0, 0, 0, (byte)0xFF};
-		//Vector<Byte> arrRegistersValues = new Vector();
-		//arrSampleLog = new Vector<SampleInstance[]>();
+		//ArrayList<Byte> arrRegistersValues = new ArrayList();
+		//arrSampleLog = new ArrayList<SampleInstance[]>();
 		
 		// FIXME Just to test drums in Black Reign mod
         Sample[] arrDigiDrums = new Sample[31];
@@ -927,11 +927,11 @@ static final int period_set_step[] =
 					arrDigiDrums);
     }
 
-    protected Vector getPSGRegistersValues(Vector arrRawChiptune, String strExt)
+    protected ArrayList getPSGRegistersValues(ArrayList arrRawChiptune, String strExt)
     {return null;}
     
 	@Override
-	protected Chiptune getPreProcessedChiptune(Vector arrRawChiptune, String strExt) {
+	protected Chiptune getPreProcessedChiptune(ArrayList arrRawChiptune, String strExt) {
 		
 		if (strExt.toUpperCase().equals("MOD"))
 		{
@@ -969,7 +969,7 @@ static final int period_set_step[] =
 				//if (arrRegistersValues == null) return null;
 				
 				// Uninterleave data
-				/*Vector<Byte> arrUninterleavedRawChiptune = new Vector<Byte>();
+				/*ArrayList<Byte> arrUninterleavedRawChiptune = new ArrayList<Byte>();
 				int intVBL = arrRegistersValues.size()/YMC_Tools.CPC_REGISTERS;
 				for(int reg=0;reg<YMC_Tools.CPC_REGISTERS;reg++)
 				{

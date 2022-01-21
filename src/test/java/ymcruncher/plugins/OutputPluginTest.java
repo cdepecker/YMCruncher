@@ -14,7 +14,7 @@ public interface OutputPluginTest {
     default String getTmpDir() throws IOException {
         final String tmpdir = Files.createTempDirectory("tmpDirPrefix").toFile().getAbsolutePath();
         final String tmpDirsLocation = System.getProperty("java.io.tmpdir");
-        assert(tmpdir).startsWith(tmpDirsLocation);
+        assert (tmpdir).startsWith(tmpDirsLocation);
         return tmpdir;
     }
 
