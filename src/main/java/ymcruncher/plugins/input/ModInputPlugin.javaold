@@ -1004,4 +1004,8 @@ static final int period_set_step[] =
 		return null;
 	}
 
+    @Override
+    String getMenuLabel() {
+        return "MOD Format";
+    }
 }

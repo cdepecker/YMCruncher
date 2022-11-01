@@ -1,7 +1,5 @@
 package ymcruncher.core;
 
-import ymcruncher.plugins.SampleInstance;
-
 /**
  * The aim of this class is to have a sort of record that hold frequencies value in a double format, so that
  * conversion error are the lowest possible.
@@ -9,7 +7,7 @@ import ymcruncher.plugins.SampleInstance;
  */
 public class Frame {
     // Channels's frequency
-    private double pPeriod[] = new double[]{0, 0, 0};
+    private double[] pPeriod = new double[]{0, 0, 0};
 
     // Noise's frequency
     private double pPeriodN = 0;
@@ -19,11 +17,11 @@ public class Frame {
 
     // Byte registers
     private byte bytReg7 = (7 << 3) + 7;            // Mute all
-    private byte bytVol[] = new byte[]{0, 0, 0};
+    private byte[] bytVol = new byte[]{0, 0, 0};
     private byte bytReg13 = 0;
 
     // Samples
-    private SampleInstance arrSI[] = new SampleInstance[]{null, null, null};
+    private SampleInstance[] arrSI = new SampleInstance[]{null, null, null};
 
     //*****************************************************
     // Constructors
@@ -52,13 +50,13 @@ public class Frame {
         double[] arrPP = null;
         if (pPeriod != null) {
             arrPP = new double[pPeriod.length];
-            for (int i = 0; i < pPeriod.length; i++) arrPP[i] = pPeriod[i];
+            System.arraycopy(pPeriod, 0, arrPP, 0, pPeriod.length);
         }
 
         byte[] arrV = null;
         if (bytVol != null) {
             arrV = new byte[bytVol.length];
-            for (int i = 0; i < bytVol.length; i++) arrV[i] = bytVol[i];
+            System.arraycopy(bytVol, 0, arrV, 0, bytVol.length);
         }
 
         SampleInstance[] arrS = null;
@@ -181,7 +179,7 @@ public class Frame {
             case 8:
             case 9:
             case 10:
-                Byte bytVolChannel = (Byte) bytVol[i - 8];
+                byte bytVolChannel = bytVol[i - 8];
                 return (byte) (bytVolChannel & 0x1F);
             case 6:
                 lngFreq = (long) pPeriodN;

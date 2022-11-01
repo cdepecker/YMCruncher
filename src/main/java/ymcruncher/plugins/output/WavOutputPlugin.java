@@ -1,10 +1,12 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.output;
 
 import com.google.auto.service.AutoService;
 import ymcruncher.core.Chiptune;
 import ymcruncher.core.Frame;
 import ymcruncher.core.OutputPlugin;
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
+import ymcruncher.core.SampleInstance;
+import ymcruncher.core.SpecialFXType;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -86,10 +88,10 @@ public class WavOutputPlugin extends OutputPlugin {
             int avgByteSec = wavRate * blockAlignTotal;
 
             // Log
-            YMC_Tools.info("+ Wave");
-            YMC_Tools.info("  - PlayMode = " + (getBooleanOption(PARAM_STEREO) ? "Stereo" : "Mono"));
-            YMC_Tools.info("  - " + PARAM_WAVRATE_LIST + " = " + wavRate + " Hz");
-            YMC_Tools.info("  - " + PARAM_BITRATE + " = " + nbBit + " bits");
+            Tools.info("+ Wave");
+            Tools.info("  - PlayMode = " + (getBooleanOption(PARAM_STEREO) ? "Stereo" : "Mono"));
+            Tools.info("  - " + PARAM_WAVRATE_LIST + " = " + wavRate + " Hz");
+            Tools.info("  - " + PARAM_BITRATE + " = " + nbBit + " bits");
 
             // OverSample (50hz <-> 44100hz)
             int intOverSample = wavRate / chiptune.getPlayRate();
@@ -232,19 +234,19 @@ public class WavOutputPlugin extends OutputPlugin {
                                         ay0.SidVol[v] = ay0.SidMax[v];
                                         ay0.bytType[v] = si.getType();
                                     }
-                                    YMC_Tools.debug("+ SidVoice " + v + " [" + ay0.SidMax[v] + ", " + ay0.rate_samples[v] + "]");
+                                    Tools.debug("+ SidVoice " + v + " [" + ay0.SidMax[v] + ", " + ay0.rate_samples[v] + "]");
                                     break;
                                 case ATARI_SINSID:
                                     ay0.SidMax[v] = si.getSample();
                                     ay0.bytType[v] = si.getType();
-                                    YMC_Tools.debug("+ SinSid [" + ay0.SidMax[v] + ", " + ay0.rate_samples[v] + "]");
+                                    Tools.debug("+ SinSid [" + ay0.SidMax[v] + ", " + ay0.rate_samples[v] + "]");
                                     break;
                                 case ATARI_SYNCBUZZER:
                                     ay0.bytType[v] = si.getType();
                                     ay0.Buzzer[v] = (byte) (0xF & si.getSample());
                                     ay0.counters[4] = 0;
                                     ay0.bytEnvVolCnt = 0;
-                                    YMC_Tools.debug("+ Sync-Buzzer [" + ay0.Buzzer[v] + ", " + ay0.rate_samples[v] + "]");
+                                    Tools.debug("+ Sync-Buzzer [" + ay0.Buzzer[v] + ", " + ay0.rate_samples[v] + "]");
                                     break;
                                 case ATARI_DIGIDRUM:
                                 default:
@@ -252,7 +254,7 @@ public class WavOutputPlugin extends OutputPlugin {
                                     ay0.counters_samples[v] = 0;
                                     ay0.index_samples[v] = 0;
                                     ay0.wav_samples[v] = chiptune.getArrSamples()[si.getSample()].getWave8bits();
-                                    YMC_Tools.debug("+ Sample [" + si.getSample() + ", " + ay0.rate_samples[v] + "]");
+                                    Tools.debug("+ Sample [" + si.getSample() + ", " + ay0.rate_samples[v] + "]");
                             }
                         } else switch (ay0.bytType[v]) {
                             // We terminate the SpecialFX

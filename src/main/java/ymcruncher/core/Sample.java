@@ -1,4 +1,4 @@
-package ymcruncher.plugins;
+package ymcruncher.core;
 
 
 /**
@@ -43,7 +43,7 @@ public class Sample {
     /**
      * Constructor
      */
-    Sample(String pname, int plength, byte presolution, boolean pSigned, byte pfinetune, byte pvolume, int prepeat_offset, int prepeat_length, byte[] parrWave) {
+    public Sample(String pname, int plength, byte presolution, boolean pSigned, byte pfinetune, byte pvolume, int prepeat_offset, int prepeat_length, byte[] parrWave) {
         name = pname;
         length = plength;
         resolution = presolution;

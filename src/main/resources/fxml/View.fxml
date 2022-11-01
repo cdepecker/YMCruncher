@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.TextFlow?>
+<VBox xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+      prefWidth="600.0"
+      spacing="15.0"
+      stylesheets="@../css/styles.css"
+      fx:controller="ymcruncher.core.Controller">
+
+    <!-- Menu -->
+    <MenuBar fx:id="menuBar">
+        <menus>
+            <Menu text="Settings">
+                <items>
+                    <CheckMenuItem text="Verbose" onAction="#toggleVerbose"/>
+                    <MenuItem text="Destination Folder" onAction="#chooseDestinationFolder"/>
+                    <Menu fx:id="settings" text="Settings"/>
+                </items>
+            </Menu>
+            <Menu text="Help">
+                <MenuItem text="About" onAction="#showInformation"/>
+            </Menu>
+        </menus>
+    </MenuBar>
+
+    <!-- Files List -->
+    <VBox alignment="CENTER_LEFT" spacing="25.0">
+        <Label text="Files to crunch:"/>
+        <ListView fx:id="listFiles" prefHeight="200.0" prefWidth="200.0"/>
+    </VBox>
+
+    <!-- Action/Buttons -->
+    <HBox alignment="CENTER_LEFT" spacing="25.0">
+        <Button onAction="#addFiles" text="Add"/>
+        <Button onAction="#removeFiles" text="Remove"/>
+        <Button onAction="#infoFile" text="Info"/>
+        <ComboBox fx:id="outputPlugins" items="${controller.model.outputPluginsObservableList}" />
+        <Button onAction="#crunchFiles" text="Crunch"/>
+        <Button onAction="#testProgressBar" text="Test ProgressBar"/>
+    </HBox>
+
+    <!-- File Info -->
+    <VBox alignment="CENTER_LEFT" spacing="25.0">
+        <Label text="FileInfo:"/>
+        <ScrollPane fx:id="sp" layoutX="1.0" layoutY="1.0" prefHeight="189.0" prefViewportHeight="148.0" prefViewportWidth="139.0" prefWidth="288.0" AnchorPane.bottomAnchor="66.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0">
+            <content>
+                <TextFlow fx:id="txtInfo" prefHeight="200.0" prefWidth="200.0"/>
+            </content>
+        </ScrollPane>
+    </VBox>
+
+    <!-- Progression -->
+    <HBox alignment="CENTER_LEFT" spacing="25.0">
+        <Label text="Current progression"/>
+        <ProgressBar fx:id="chiptuneProgressBar" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+    <HBox alignment="CENTER_LEFT" spacing="25.0">
+        <Label text="Total progression"/>
+        <ProgressBar fx:id="totalProgressBar" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+    </HBox>
+
+    <padding>
+        <Insets topRightBottomLeft="15" />
+    </padding>
+</VBox>

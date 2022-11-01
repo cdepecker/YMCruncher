@@ -1,4 +1,4 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.input;
 
 public class ModInstrument {
     String name;

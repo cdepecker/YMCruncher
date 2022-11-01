@@ -1,6 +1,9 @@
 package ymcruncher.core;
 
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -16,27 +19,27 @@ import java.util.stream.Collectors;
  * @author F-key/RevivaL
  */
 
-public abstract class InputPlugin {
+public abstract class InputPlugin extends Plugin {
 
-    /**
-     * Private data needed for further convertion
-     */
+    // Logger
+    private static final Logger LOGGER = LogManager.getLogger(InputPlugin.class.getName());
+
+    // List of plugins
+    // TODO Move into InputPluginFactory class
+    private static final List<InputPlugin> plugins = initPlugins();
+
     public String strFileType = "unknown";
-
-    static private List<InputPlugin> plugins = initPlugins();
 
     /**
      * Return available input plugins
      */
-    @SuppressWarnings("unchecked")
     public static List<InputPlugin> getInputPlugins() {
         return plugins;
     }
 
     private static List<InputPlugin> initPlugins() {
         ServiceLoader<InputPlugin> serviceLoader = ServiceLoader.load(InputPlugin.class);
-        List<InputPlugin> plugins = serviceLoader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
-        return plugins;
+        return serviceLoader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toList());
     }
 
     /**
@@ -46,26 +49,31 @@ public abstract class InputPlugin {
      * @param strExt         String Extension of the file (i.e. "mod")
      * @return Chiptune
      */
-    abstract protected Chiptune getPreProcessedChiptune(ArrayList arrRawChiptune, String strExt);
+    abstract protected boolean getPreProcessedChiptune(Chiptune chiptune, ArrayList<Byte> arrRawChiptune, String strExt);
 
-    /**
-     * Wrapper for the previous function
-     *
-     * @param arrRawChiptune ArrayList of uncompressed input chiptune data
-     * @return Chiptune which hold the input chiptune
-     */
-    public Chiptune getChiptune(ArrayList arrRawChiptune, boolean blnConvertFrequency, String strExt) {
-        // get Chiptune
-        Chiptune chiptune = this.getPreProcessedChiptune(arrRawChiptune, strExt);
+    public boolean loadChiptune(Chiptune chiptune, ArrayList<Byte> arrData, String strExt) {
 
-        // Printing various Informations
-        if (chiptune != null) {
-            int intDuration = chiptune.getLength() / chiptune.getPlayRate();
-            YMC_Tools.debug("+ File Informations");
-            YMC_Tools.debug("  - Frames : " + chiptune.getLength());
-            YMC_Tools.debug("  - Time : " + intDuration + " secondes.");
+        // Reject if no file reference in Chiptune
+        if (chiptune == null || chiptune.getFile() == null) {
+            LOGGER.error("Attempting to load a null chiptune or a chiptune with a null file value");
+            return false;
         }
 
-        return chiptune;
+        // Log info into Chiptune
+        Tools.clearLog();
+        Tools.info("#############");
+        Tools.info("# Input Log #");
+        Tools.info("#############");
+
+        boolean isChiptuneLoaded = getPreProcessedChiptune(chiptune, arrData, strExt);
+
+        if (isChiptuneLoaded) {
+            int intDuration = chiptune.getLength() / chiptune.getPlayRate();
+            LOGGER.debug("+ File Informations");
+            LOGGER.debug("  - Frames : " + chiptune.getLength());
+            LOGGER.debug("  - Time : " + intDuration + " secondes.");
+        }
+
+        return isChiptuneLoaded;
     }
 }

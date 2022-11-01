@@ -1,10 +1,11 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.input;
 
 import com.google.auto.service.AutoService;
 import ymcruncher.core.Chiptune;
 import ymcruncher.core.Frame;
 import ymcruncher.core.InputPlugin;
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
+import ymcruncher.core.SampleInstance;
 
 import java.util.ArrayList;
 
@@ -64,7 +65,7 @@ public class VgmInputPlugin extends InputPlugin {
     // Parameters
     //private static String PARAM_ADJUST_VOLUME = "Adjust the Volume to CPC chip (AY-3-8910)";
 
-    private static byte bytVolumeConvertion[] =
+    private static final byte[] bytVolumeConvertion =
             {15, 14, 14, 13, 12, 12, 11, 10, 10, 9, 8, 8, 7, 6, 6, 0};
     // old vol table {10, 9, 9, 8, 7, 7, 6, 5, 5, 4, 3, 3, 2, 1, 1, 0};
 
@@ -81,47 +82,45 @@ public class VgmInputPlugin extends InputPlugin {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    protected Chiptune getPreProcessedChiptune(ArrayList arrRawChiptune, String strExt) {
+    @Override
+    protected boolean getPreProcessedChiptune(Chiptune chiptune, ArrayList arrRawChiptune, String strExt) {
         // Get type of file
-        strFileType = YMC_Tools.getString(arrRawChiptune, 0, 4);
+        strFileType = Tools.getString(arrRawChiptune, 0, 4);
         if (strFileType.subSequence(0, 3).equals("Vgm")) {
-            //ArrayList<Byte> arrRegistersValues = null;
-            //arrRegistersValues = new ArrayList<Byte>();
-            ArrayList<Frame> arrFrame = new ArrayList();
+            ArrayList arrFrame = new ArrayList();
 
             // Let's get the header
-            Long intVersion = YMC_Tools.getLEInt(arrRawChiptune, 0x8);
-            Long intFrequency = YMC_Tools.getLEInt(arrRawChiptune, 0xC);
-            Long intRate = YMC_Tools.getLEInt(arrRawChiptune, 0x24);
-            Long intVGMdataOffset = YMC_Tools.getLEInt(arrRawChiptune, 0x34);
-            YMC_Tools.info("+ VGM version = 0x" + Long.toHexString(intVersion.longValue()).toUpperCase());
-            YMC_Tools.info("+ SN76489 clock = " + intFrequency.longValue() + "Hz");
-            YMC_Tools.info("+ Player Frequency = " + intRate.longValue() + "Hz");
-            YMC_Tools.info("+ VGM data offset = " + Long.toHexString(intVGMdataOffset.longValue()));
+            long intVersion = Tools.getLEInt(arrRawChiptune, 0x8);
+            long intFrequency = Tools.getLEInt(arrRawChiptune, 0xC);
+            long intRate = Tools.getLEInt(arrRawChiptune, 0x24);
+            long intVGMdataOffset = Tools.getLEInt(arrRawChiptune, 0x34);
+            Tools.info("+ VGM version = 0x" + Long.toHexString(intVersion).toUpperCase());
+            Tools.info("+ SN76489 clock = " + intFrequency + "Hz");
+            Tools.info("+ Player Frequency = " + intRate + "Hz");
+            Tools.info("+ VGM data offset = " + Long.toHexString(intVGMdataOffset));
 
             // set Frequency for conversion to cpc
             intRate = (intRate == 0) ? 60 : intRate;
-            intFrequency = new Long(intFrequency.longValue() / 2);
-            int intPlayRate = intRate.intValue();
+            intFrequency = intFrequency / 2;
+            int intPlayRate = (int) intRate;
 
             // Nb samples in a frame
             int nbSampleFrame = (intRate == 60) ? 735 : 882;
 
             // Useless values in the header
-            YMC_Tools.debug("+ EoF offset = 0x" + Long.toHexString(YMC_Tools.getLEInt(arrRawChiptune, 0x4).longValue()).toUpperCase());
-            YMC_Tools.debug("+ YM2413 clock = " + YMC_Tools.getLEInt(arrRawChiptune, 0x10).longValue() + "Hz");
-            YMC_Tools.debug("+ GD3 Offset = 0x" + Long.toHexString(YMC_Tools.getLEInt(arrRawChiptune, 0x14).longValue()).toUpperCase());
-            YMC_Tools.debug("+ Total # samples = " + YMC_Tools.getLEInt(arrRawChiptune, 0x18).longValue());
-            YMC_Tools.debug("+ Loop offset = 0x" + Long.toHexString(YMC_Tools.getLEInt(arrRawChiptune, 0x1C).longValue()).toUpperCase());
-            YMC_Tools.debug("+ Loop # samples = " + YMC_Tools.getLEInt(arrRawChiptune, 0x20).longValue());
-            YMC_Tools.debug("+ SN76489 feedback = 0x" + Long.toHexString(YMC_Tools.getLEShort(arrRawChiptune, 0x28).longValue()).toUpperCase());
-            YMC_Tools.debug("+ SN76489 shift register width = 0x" + Long.toHexString(YMC_Tools.getLEByte(arrRawChiptune, 0x2A).longValue()).toUpperCase());
-            YMC_Tools.debug("+ YM2612 clock = " + YMC_Tools.getLEInt(arrRawChiptune, 0x2C).longValue() + "Hz");
-            YMC_Tools.debug("+ YM2151 clock = " + YMC_Tools.getLEInt(arrRawChiptune, 0x30).longValue() + "Hz");
+            Tools.debug("+ EoF offset = 0x" + Long.toHexString(Tools.getLEInt(arrRawChiptune, 0x4)).toUpperCase());
+            Tools.debug("+ YM2413 clock = " + Tools.getLEInt(arrRawChiptune, 0x10) + "Hz");
+            Tools.debug("+ GD3 Offset = 0x" + Long.toHexString(Tools.getLEInt(arrRawChiptune, 0x14)).toUpperCase());
+            Tools.debug("+ Total # samples = " + Tools.getLEInt(arrRawChiptune, 0x18));
+            Tools.debug("+ Loop offset = 0x" + Long.toHexString(Tools.getLEInt(arrRawChiptune, 0x1C)).toUpperCase());
+            Tools.debug("+ Loop # samples = " + Tools.getLEInt(arrRawChiptune, 0x20));
+            Tools.debug("+ SN76489 feedback = 0x" + Long.toHexString(Tools.getLEShort(arrRawChiptune, 0x28).longValue()).toUpperCase());
+            Tools.debug("+ SN76489 shift register width = 0x" + Long.toHexString(Tools.getLEByte(arrRawChiptune, 0x2A).longValue()).toUpperCase());
+            Tools.debug("+ YM2612 clock = " + Tools.getLEInt(arrRawChiptune, 0x2C) + "Hz");
+            Tools.debug("+ YM2151 clock = " + Tools.getLEInt(arrRawChiptune, 0x30) + "Hz");
 
             // Check version
-            if ((intVersion <= 0x110) || intVGMdataOffset == 0) intVGMdataOffset = new Long(0x40L);
+            if ((intVersion <= 0x110) || intVGMdataOffset == 0) intVGMdataOffset = 0x40L;
 
             Frame frame = new Frame(
                     new double[]{0, 0, 0},    // Freq channels 0,1,2
@@ -143,11 +142,11 @@ public class VgmInputPlugin extends InputPlugin {
             int intWait = 0;
 
             // Wait nbsamples
-            Integer shtWait = 0;
+            int shtWait = 0;
 
             // Parse all commands
             boolean blnEnd = false;
-            int intOffset = intVGMdataOffset.intValue();
+            int intOffset = (int) intVGMdataOffset;
             if (intVersion <= 0x101) intOffset = (intOffset == 0) ? 0x40 : intOffset;
             else intOffset += 0x34;
             while (intOffset < arrRawChiptune.size() && !blnEnd) {
@@ -189,7 +188,7 @@ public class VgmInputPlugin extends InputPlugin {
                             shtWait += nWait;
                             break;
                         case WAITN:
-                            shtWait += YMC_Tools.getLEShort(arrRawChiptune, intOffset);
+                            shtWait += Tools.getLEShort(arrRawChiptune, intOffset);
                             intOffset += 2;
                             break;
                         case WAIT_50:
@@ -271,7 +270,7 @@ public class VgmInputPlugin extends InputPlugin {
                         case YM2612_1_WRITE:
                         case YM2151_WRITE:
                             int intCmd2 = cmd & 0xFF;
-                            YMC_Tools.debug("! Ignored VGM command : 0x" + Integer.toHexString(intCmd2) + " [Offset : 0x" + Integer.toHexString(intOffset) + "]");
+                            Tools.debug("! Ignored VGM command : 0x" + Integer.toHexString(intCmd2) + " [Offset : 0x" + Integer.toHexString(intOffset) + "]");
                             intOffset += 2;
                             break;
                         default:
@@ -282,34 +281,29 @@ public class VgmInputPlugin extends InputPlugin {
                             else if ((intCmd >= 0xc0) && (intCmd <= 0xdf)) intOffset += 3;    // Reserved
                             else if ((intCmd >= 0xe1) && (intCmd <= 0xff)) intOffset += 4;    // Reserved
                             else
-                                YMC_Tools.info("! Unsupported VGM command : 0x" + Integer.toHexString(intCmd) + " [Offset : 0x" + Integer.toHexString(intOffset) + "]");
+                                Tools.info("! Unsupported VGM command : 0x" + Integer.toHexString(intCmd) + " [Offset : 0x" + Integer.toHexString(intOffset) + "]");
                     }
                 }
             }
 
             // Return if nothing
-            if (arrFrame == null) return null;
+            if (arrFrame.isEmpty()) return false;
 
-            return new Chiptune(null,
-                    null,
-                    arrFrame,
-                    intPlayRate,
-                    intFrequency.longValue(),
-                    false,
-                    0,
-                    null);
-
+            chiptune.setArrFrame(arrFrame);
+            chiptune.setPlayRate(intPlayRate);
+            chiptune.setFrequency(intFrequency);
+            return true;
         }
 
         // Not a VGM file
-        return null;
+        return false;
     }
 
     /**
      * Private function to pouplate Noise info for VGM converted tunes
      */
     private Frame getFrameWithNoise(Frame frame, byte NoiseVol, byte NoiseControl) {
-        /**
+        /*
          * Low 2 bits    Value counter
          of register    is reset to
          00            0x10
@@ -358,7 +352,7 @@ public class VgmInputPlugin extends InputPlugin {
     private byte getNoiseMixer(byte bytNoiseVol, byte A, byte B, byte C) {
         int intOffset = 0;
         int intDiff = bytNoiseVol;
-        int arrNoiseFilter[] = {0, C, B, B + C, A, A + C, A + B, A + B + C};
+        int[] arrNoiseFilter = {0, C, B, B + C, A, A + C, A + B, A + B + C};
         for (int i = 1; i < arrNoiseFilter.length; i++) {
             int intDiffAux = Math.abs(arrNoiseFilter[i] - bytVolumeConvertion[bytNoiseVol]);
             if (intDiffAux < intDiff) {
@@ -368,5 +362,10 @@ public class VgmInputPlugin extends InputPlugin {
             }
         }
         return (byte) intOffset;
+    }
+
+    @Override
+    public String getMenuLabel() {
+        return "VGM Format";
     }
 }

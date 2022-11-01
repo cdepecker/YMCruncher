@@ -1,14 +1,15 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.input;
 
 
 import com.google.auto.service.AutoService;
 import lha.LhaEntry;
-import lha.LhaException;
 import lha.LhaFile;
 import lha.LhaInputStream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ymcruncher.core.Chiptune;
 import ymcruncher.core.InputPlugin;
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -27,6 +28,9 @@ import java.util.ArrayList;
 @AutoService(InputPlugin.class)
 public class VtxInputPlugin extends InputPlugin {
 
+    // Logger
+    private static final Logger LOGGER = LogManager.getLogger(VtxInputPlugin.class.getName());
+
     /**
      * This method should basically return an array of PSG registers' values
      * Let's call Rx the Register number x, then this function should return
@@ -41,39 +45,38 @@ public class VtxInputPlugin extends InputPlugin {
     }
 
     @SuppressWarnings("unchecked")
-    protected Chiptune getPreProcessedChiptune(ArrayList arrRawChiptune, String strExt) {
-        ArrayList arrRegistersValues = null;
-
+    @Override
+    protected boolean getPreProcessedChiptune(Chiptune chiptune, ArrayList arrRawChiptune, String strExt) {
         // Get type of file
-        strFileType = YMC_Tools.getString(arrRawChiptune, 0, 4);
+        strFileType = Tools.getString(arrRawChiptune, 0, 4);
         if (strFileType.subSequence(0, 2).equals("ay")
                 || strFileType.subSequence(0, 2).equals("ym")) {
-            Short bytPlayingMode = YMC_Tools.getLEByte(arrRawChiptune, 2);
-            Integer shtLoopVBL = YMC_Tools.getLEShort(arrRawChiptune, 3);
-            Long intFrequency = YMC_Tools.getLEInt(arrRawChiptune, 5);
-            Short bytPlayerfrequency = YMC_Tools.getLEByte(arrRawChiptune, 9);
-            Integer shtCreationDate = YMC_Tools.getLEShort(arrRawChiptune, 10);
-            Long intPackedDataSize = YMC_Tools.getLEInt(arrRawChiptune, 12);
+            Short bytPlayingMode = Tools.getLEByte(arrRawChiptune, 2);
+            Integer shtLoopVBL = Tools.getLEShort(arrRawChiptune, 3);
+            Long intFrequency = Tools.getLEInt(arrRawChiptune, 5);
+            Short bytPlayerfrequency = Tools.getLEByte(arrRawChiptune, 9);
+            Integer shtCreationDate = Tools.getLEShort(arrRawChiptune, 10);
+            Long intPackedDataSize = Tools.getLEInt(arrRawChiptune, 12);
 
-            YMC_Tools.info("+ Playing Mode = 0x" + Long.toHexString(bytPlayingMode.longValue()).toUpperCase());
-            YMC_Tools.info("+ Loop VBL = 0x" + Long.toHexString(shtLoopVBL.longValue()).toUpperCase());
-            YMC_Tools.info("+ Chip Frequency = " + intFrequency.longValue() + "Hz");
-            YMC_Tools.info("+ Player Frequency = " + bytPlayerfrequency.shortValue() + "Hz");
-            YMC_Tools.info("+ Creation Date = " + shtCreationDate.intValue());
-            YMC_Tools.info("+ Size of Packed Data = 0x" + Long.toHexString(intPackedDataSize.longValue()).toUpperCase());
+            Tools.info("+ Playing Mode = 0x" + Long.toHexString(bytPlayingMode.longValue()).toUpperCase());
+            Tools.info("+ Loop VBL = 0x" + Long.toHexString(shtLoopVBL.longValue()).toUpperCase());
+            Tools.info("+ Chip Frequency = " + intFrequency + "Hz");
+            Tools.info("+ Player Frequency = " + bytPlayerfrequency + "Hz");
+            Tools.info("+ Creation Date = " + shtCreationDate);
+            Tools.info("+ Size of Packed Data = 0x" + Long.toHexString(intPackedDataSize).toUpperCase());
 
             // Other Info
             int intOffset = 16;
-            String strSongName = YMC_Tools.getNTString(arrRawChiptune, intOffset, false);
-            String strAuthorName = YMC_Tools.getNTString(arrRawChiptune, intOffset += strSongName.length() + 1, false);
-            String strEditor = YMC_Tools.getNTString(arrRawChiptune, intOffset += strAuthorName.length() + 1, false);
-            String strSourceProgram = YMC_Tools.getNTString(arrRawChiptune, intOffset += strEditor.length() + 1, false);
-            String strComments = YMC_Tools.getNTString(arrRawChiptune, intOffset += strSourceProgram.length() + 1, false);
-            YMC_Tools.info("+ Song Name = " + strSongName);
-            YMC_Tools.info("+ Author = " + strAuthorName);
-            YMC_Tools.info("+ Source Program = " + strSourceProgram);
-            YMC_Tools.info("+ Editor Name = " + strEditor);
-            YMC_Tools.info("+ Comments = " + strComments);
+            String strSongName = Tools.getNTString(arrRawChiptune, intOffset, false);
+            String strAuthorName = Tools.getNTString(arrRawChiptune, intOffset += strSongName.length() + 1, false);
+            String strEditor = Tools.getNTString(arrRawChiptune, intOffset += strAuthorName.length() + 1, false);
+            String strSourceProgram = Tools.getNTString(arrRawChiptune, intOffset += strEditor.length() + 1, false);
+            String strComments = Tools.getNTString(arrRawChiptune, intOffset += strSourceProgram.length() + 1, false);
+            Tools.info("+ Song Name = " + strSongName);
+            Tools.info("+ Author = " + strAuthorName);
+            Tools.info("+ Source Program = " + strSourceProgram);
+            Tools.info("+ Editor Name = " + strEditor);
+            Tools.info("+ Comments = " + strComments);
 
             // only keep data
             intOffset += strComments.length() + 1;
@@ -110,7 +113,7 @@ public class VtxInputPlugin extends InputPlugin {
                 arrBytes[b] = arrBytesHeader[b];
             }
             for (int i = 0; i < arrRawChiptune.size(); i++)
-                arrBytes[i + arrBytesHeader.length] = ((Byte) arrRawChiptune.get(i)).byteValue();
+                arrBytes[i + arrBytesHeader.length] = (Byte) arrRawChiptune.get(i);
             arrBytes[arrBytes.length - 1] = 0;
 
             // the following info are stored direcctly in the array of bytes
@@ -120,28 +123,26 @@ public class VtxInputPlugin extends InputPlugin {
             // Set HeaderChecksum
             byte bytHeaderChecksum = 0;
             for (byte b = 2; b < arrBytesHeader.length; b++) {
-                bytHeaderChecksum += (byte) arrBytes[b];
+                bytHeaderChecksum += arrBytes[b];
             }
             arrBytes[1] = bytHeaderChecksum;
 
             // We should decompress and process next data
-            ByteArrayInputStream arrBytesIS = new ByteArrayInputStream(arrBytes);
-            InputStream in = arrBytesIS;
-            LhaInputStream lhaInp = new LhaInputStream(in);
+            LhaInputStream lhaInp = new LhaInputStream(new ByteArrayInputStream(arrBytes));
 
             LhaEntry lhaCompressedEntry;
             try {
                 lhaCompressedEntry = lhaInp.getNextEntry();
                 // Hack of the lha library
                 lhaCompressedEntry.setOffset(33);
-                YMC_Tools.debug("+ Entry = " + lhaCompressedEntry);
+                Tools.debug("+ Entry = " + lhaCompressedEntry);
 
                 // Decompress YM3 data
                 ArrayList arrData = new ArrayList();
-                arrData.add(new Byte((byte) 'Y'));
-                arrData.add(new Byte((byte) 'M'));
-                arrData.add(new Byte((byte) '3'));
-                arrData.add(new Byte((byte) '!'));
+                arrData.add((byte) 'Y');
+                arrData.add((byte) 'M');
+                arrData.add((byte) '3');
+                arrData.add((byte) '!');
 
                 // We need a file to decompress
                 FileOutputStream tmpFile = new FileOutputStream("VTXFILE.LHA");
@@ -154,7 +155,7 @@ public class VtxInputPlugin extends InputPlugin {
 
                 int intBytesRead = 0;
                 while ((inputStreamEntry.available() > 0) && (intBytesRead++ < lhaCompressedEntry.getOriginalSize())) {
-                    Byte byte_read = new Byte((byte) inputStreamEntry.read());
+                    Byte byte_read = (byte) inputStreamEntry.read();
                     arrData.add(byte_read);
                 }
                 inputStreamEntry.close();
@@ -163,24 +164,26 @@ public class VtxInputPlugin extends InputPlugin {
 
                 // get uncompressed data from YM plugin
                 YmInputPlugin ymplug = new YmInputPlugin();
-                arrRegistersValues = ymplug.getPSGRegistersValues(arrData, "YM");
-                return new Chiptune(strSongName,
-                        strAuthorName,
-                        arrRegistersValues,
-                        bytPlayerfrequency,
-                        intFrequency.longValue(),
-                        false,
-                        0,
-                        null/*,
-						null*/);
-            } catch (LhaException e) {
+                ArrayList arrRegistersValues = ymplug.getPSGRegistersValues(arrData, "YM");
+
+                chiptune.setStrSongName(strSongName);
+                chiptune.setStrAuthorName(strAuthorName);
+                chiptune.setArrFrame(arrRegistersValues);
+                chiptune.setPlayRate(bytPlayerfrequency);
+                chiptune.setFrequency(intFrequency);
+
+                return true;
+
+            }  catch (IOException e) {
                 e.printStackTrace();
-                return null;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
+                LOGGER.error("An error occured while trying to read from file " + chiptune.getFile().getAbsolutePath());
             }
         }
-        return null;
+        return false;
+    }
+
+    @Override
+   public String getMenuLabel() {
+        return "VTX Format";
     }
 }

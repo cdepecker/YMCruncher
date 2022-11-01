@@ -1,4 +1,4 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.output;
 
 import java.io.File;
 import java.io.IOException;

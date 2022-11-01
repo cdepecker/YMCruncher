@@ -1,6 +1,6 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.input;
 
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -39,11 +39,11 @@ class Mod {
         int numinst = 15;
         numtracks = 4;
         // read mod header
-        name = YMC_Tools.getNTString(arrRawChiptune, 0, false);
+        name = Tools.getNTString(arrRawChiptune, 0, false);
 //        System.out.println(name);
         // get the int at offset 1080 to see if 15 or 31 mod
-        String strSignature = YMC_Tools.getString(arrRawChiptune, 1080, 4);
-        YMC_Tools.debug("+ ID : " + strSignature);
+        String strSignature = Tools.getString(arrRawChiptune, 1080, 4);
+        Tools.debug("+ ID : " + strSignature);
 
         // see if it matches any of our bytes
         for (i = 0; i < voice_31_list.length; i++) {
@@ -124,18 +124,18 @@ class Mod {
 
     static ModInstrument readInstrument(ArrayList<Byte> arrRawChiptune, int offset) throws IOException {
         ModInstrument inst = new ModInstrument();
-        inst.name = YMC_Tools.getNTString(arrRawChiptune, offset, false);
+        inst.name = Tools.getNTString(arrRawChiptune, offset, false);
         offset += 22;
-        inst.sample_length = YMC_Tools.getBEShort(arrRawChiptune, offset) << 1;
+        inst.sample_length = Tools.getBEShort(arrRawChiptune, offset) << 1;
         offset += 2;
         inst.samples = new byte[inst.sample_length + 8];  // a little padding for interp.
-        inst.finetune_value = (int) ((byte) ((YMC_Tools.getLEByte(arrRawChiptune, offset) & 0x0F) << 4));
+        inst.finetune_value = (int) ((byte) ((Tools.getLEByte(arrRawChiptune, offset) & 0x0F) << 4));
         offset++;
-        inst.volume = YMC_Tools.getLEByte(arrRawChiptune, offset) & 0x7F;
+        inst.volume = Tools.getLEByte(arrRawChiptune, offset) & 0x7F;
         offset++;
-        inst.repeat_point = YMC_Tools.getBEShort(arrRawChiptune, offset) << 1;
+        inst.repeat_point = Tools.getBEShort(arrRawChiptune, offset) << 1;
         offset += 2;
-        inst.repeat_length = YMC_Tools.getBEShort(arrRawChiptune, offset) << 1;
+        inst.repeat_length = Tools.getBEShort(arrRawChiptune, offset) << 1;
         offset += 2;
         if (inst.repeat_point > inst.sample_length)
             inst.repeat_point = inst.sample_length;
@@ -147,7 +147,7 @@ class Mod {
     static void readSampleData(ArrayList<Byte> arrRawChiptune, int offset, ModInstrument inst) throws IOException {
         // Read fully
         for (int j = 0; j < inst.sample_length; j++)
-            inst.samples[j] = YMC_Tools.getLEByte(arrRawChiptune, offset++).byteValue();
+            inst.samples[j] = Tools.getLEByte(arrRawChiptune, offset++).byteValue();
 
         if (inst.repeat_length > 3)
             System.arraycopy(inst.samples, inst.repeat_point,
@@ -156,13 +156,13 @@ class Mod {
 
     void readSequence(ArrayList<Byte> arrRawChiptune, int offset) throws IOException {
         positions = new byte[128];
-        song_length_patterns = YMC_Tools.getLEByte(arrRawChiptune, offset);
+        song_length_patterns = Tools.getLEByte(arrRawChiptune, offset);
         offset++;
-        song_repeat_patterns = YMC_Tools.getLEByte(arrRawChiptune, offset);
+        song_repeat_patterns = Tools.getLEByte(arrRawChiptune, offset);
         offset++;
 
         // Read fully
-        for (int i = 0; i < 128; i++) positions[i] = YMC_Tools.getLEByte(arrRawChiptune, offset++).byteValue();
+        for (int i = 0; i < 128; i++) positions[i] = Tools.getLEByte(arrRawChiptune, offset++).byteValue();
 
         if (song_repeat_patterns > song_length_patterns)
             song_repeat_patterns = song_length_patterns;
@@ -181,7 +181,7 @@ class Mod {
 
             // Read fully
             for (int j = 0; j < patternsize; j++)
-                patterns[i][j] = YMC_Tools.getLEByte(arrRawChiptune, offset++).byteValue();
+                patterns[i][j] = Tools.getLEByte(arrRawChiptune, offset++).byteValue();
         }
     }
 

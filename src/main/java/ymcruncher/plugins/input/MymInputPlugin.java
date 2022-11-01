@@ -1,14 +1,13 @@
-/**
- *
- */
-package ymcruncher.plugins;
+package ymcruncher.plugins.input;
 
 import com.google.auto.service.AutoService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ymcruncher.core.Chiptune;
 import ymcruncher.core.Frame;
 import ymcruncher.core.InputPlugin;
-import ymcruncher.core.OutputPlugin;
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
+import ymcruncher.core.SampleInstance;
 
 import java.util.ArrayList;
 
@@ -19,10 +18,13 @@ import java.util.ArrayList;
 @AutoService(InputPlugin.class)
 public class MymInputPlugin extends InputPlugin {
 
+    // Logger
+    private static final Logger LOGGER = LogManager.getLogger(MymInputPlugin.class.getName());
+
     final private static byte REGS = 14;
     final private static short FRAG = 128;    /*  Number of rows to compress at a time   */
     final private static byte OFFNUM = 14;   /*  Bits needed to store off+num of FRAG  */
-    final private static byte regbits[] = {8, 4, 8, 4, 8, 4, 5, 8, 5, 5, 5, 8, 8, 8}; /* Bits per PSG reg */
+    final private static byte[] regbits = {8, 4, 8, 4, 8, 4, 5, 8, 5, 5, 5, 8, 8, 8}; /* Bits per PSG reg */
 
     // For function getBits
     private static int lngCurrBitOffset = 16;
@@ -32,13 +34,13 @@ public class MymInputPlugin extends InputPlugin {
      * @see main.YMCruncher.InputPlugin#getPreProcessedChiptune(java.util.ArrayList, java.lang.String)
      */
     @Override
-    protected Chiptune getPreProcessedChiptune(ArrayList arrRawChiptune, String strExt) {
+    protected boolean getPreProcessedChiptune(Chiptune chiptune, ArrayList arrRawChiptune, String strExt) {
 
         if (strExt.toUpperCase().equals("MYM")) {
             // Set file style
             strFileType = "MYM";
 
-            int intNbFrag = YMC_Tools.getLEShort(arrRawChiptune, 0);
+            int intNbFrag = Tools.getLEShort(arrRawChiptune, 0);
 
             // Stats
             int intUnchangedFrag = 0;
@@ -47,8 +49,8 @@ public class MymInputPlugin extends InputPlugin {
             int intPreviousData = 0;
 
             // Init aux table
-            byte data[][] = new byte[REGS][intNbFrag + FRAG];
-            byte current[] = new byte[REGS];
+            byte[][] data = new byte[REGS][intNbFrag + FRAG];
+            byte[] current = new byte[REGS];
 
             // Reset static variables
             lngCurrBitOffset = 16;
@@ -114,14 +116,14 @@ public class MymInputPlugin extends InputPlugin {
             // Set nbVBL
             nbVBL /= REGS;
 
-            YMC_Tools.info("+ NbVBL = 0x" + Long.toHexString(nbVBL).toUpperCase() + " (" + intNbFrag / 50 + " seconds)");
-            YMC_Tools.debug("+ Number of unchanged fragment = " + intUnchangedFrag);
-            YMC_Tools.debug("+ Number of unchanged register = " + intUnchangedReg);
-            YMC_Tools.debug("+ Number of row data = " + intRawData);
-            YMC_Tools.debug("+ Number of previous data = " + intPreviousData);
+            Tools.info("+ NbVBL = 0x" + Long.toHexString(nbVBL).toUpperCase() + " (" + intNbFrag / 50 + " seconds)");
+            Tools.debug("+ Number of unchanged fragment = " + intUnchangedFrag);
+            Tools.debug("+ Number of unchanged register = " + intUnchangedReg);
+            Tools.debug("+ Number of row data = " + intRawData);
+            Tools.debug("+ Number of previous data = " + intPreviousData);
 
             // Cut the big array into an Array of Frames
-            ArrayList<Frame> arrFrame = new ArrayList<Frame>();
+            ArrayList<Frame> arrFrame = new ArrayList<>();
             for (int j = 0; j < nbVBL; j++) {
                 int dbPPeriod0 = data[1][j] & 0xF;
                 dbPPeriod0 <<= 8;
@@ -160,18 +162,16 @@ public class MymInputPlugin extends InputPlugin {
                 ));
             }
 
-            return new Chiptune(null,
-                    null,
-                    arrFrame,
-                    YMC_Tools.CPC_REPLAY_FREQUENCY,
-                    YMC_Tools.YM_ATARI_FREQUENCY,
-                    false,
-                    0,
-                    null);
+            LOGGER.debug(arrFrame.size());
+            chiptune.setArrFrame(arrFrame);
+            chiptune.setPlayRate(Tools.CPC_REPLAY_FREQUENCY);
+            chiptune.setFrequency(Tools.YM_ATARI_FREQUENCY);
+
+            return true;
         }
 
         // Nothing to do
-        return null;
+        return false;
     }
 
     private byte getBits(int nbBits, ArrayList<Byte> arrRawChiptune) {
@@ -192,5 +192,10 @@ public class MymInputPlugin extends InputPlugin {
         }
 
         return bytRet;
+    }
+
+    @Override
+    public String getMenuLabel() {
+        return "MYM Format";
     }
 }

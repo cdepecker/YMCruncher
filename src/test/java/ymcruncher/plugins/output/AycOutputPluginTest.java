@@ -1,4 +1,4 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.output;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

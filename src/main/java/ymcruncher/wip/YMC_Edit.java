@@ -1,4 +1,4 @@
-package ymcruncher.core;
+package ymcruncher.wip;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
@@ -14,6 +14,9 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Shell;
+import ymcruncher.core.Chiptune;
+import ymcruncher.core.Frame;
+import ymcruncher.core.Model;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -30,7 +33,7 @@ public class YMC_Edit implements Observer {
 
     // private data
     String fileName;
-    YMC_Model model;
+    Model model;
     Chiptune chiptune;
     int intBase = 0;
     int zoom = 1;
@@ -40,7 +43,7 @@ public class YMC_Edit implements Observer {
     private Display display;
     private Shell shell;
 
-    public YMC_Edit(Shell pshell, final Chiptune chiptune, YMC_Model model) {
+    public YMC_Edit(Shell pshell, final Chiptune chiptune, Model model) {
         // SWT Shell
         display = pshell.getDisplay();
         shell = new Shell(pshell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);

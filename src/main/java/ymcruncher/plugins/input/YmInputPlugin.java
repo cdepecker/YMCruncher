@@ -1,13 +1,17 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.input;
 
 import com.google.auto.service.AutoService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ymcruncher.core.Chiptune;
 import ymcruncher.core.Frame;
 import ymcruncher.core.InputPlugin;
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Sample;
+import ymcruncher.core.SampleInstance;
+import ymcruncher.core.SpecialFXType;
+import ymcruncher.core.Tools;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -20,6 +24,9 @@ import java.util.ArrayList;
  */
 @AutoService(InputPlugin.class)
 public class YmInputPlugin extends InputPlugin {
+
+    // Logger
+    private static final Logger LOGGER = LogManager.getLogger(YmInputPlugin.class.getName());
 
     // ATARI-ST MFP chip predivisor & Timer settings
     final private static int[] mfpPrediv = {0, 4, 10, 16, 50, 64, 100, 200};
@@ -35,18 +42,18 @@ public class YmInputPlugin extends InputPlugin {
 
     private String strSongName = null;
     private String strAuthorName = null;
-    private Long intFrequency = new Long(YMC_Tools.YM_ATARI_FREQUENCY);
-    private Long intLoopVBL = new Long(0);
+    private Long intFrequency = Tools.YM_ATARI_FREQUENCY;
+    private Long intLoopVBL = 0L;
     private boolean blnLoop = false;
-    private int intPlayRate = YMC_Tools.CPC_REPLAY_FREQUENCY;
+    private int intPlayRate = Tools.CPC_REPLAY_FREQUENCY;
 
     // Samples
     private Sample[] arrDigiDrums = null;
 
     // redirect Samples (trim unused samples)
     private int total_sample = 0;
-    private int sampleRedirect[] = null;
-    private boolean blSampleUsed[] = null;
+    private int[] sampleRedirect = null;
+    private boolean[] blSampleUsed = null;
 
     // SpecialFX log
     private boolean blnSidVoice = false;
@@ -55,7 +62,7 @@ public class YmInputPlugin extends InputPlugin {
     /**
      * Digidrums YM2 Load
      */
-    private byte[] sampleAdress[] = {
+    private final byte[][] sampleAdress = {
             new byte[631], new byte[631], new byte[490], new byte[490], new byte[699], new byte[505], new byte[727], new byte[480],
             new byte[2108], new byte[4231], new byte[378], new byte[1527], new byte[258], new byte[258], new byte[451], new byte[1795],
             new byte[271], new byte[636], new byte[1379], new byte[147], new byte[139], new byte[85], new byte[150], new byte[507],
@@ -63,7 +70,9 @@ public class YmInputPlugin extends InputPlugin {
             new byte[407], new byte[407], new byte[317], new byte[407], new byte[311], new byte[459], new byte[329], new byte[656]};
 
     @Override
-    protected Chiptune getPreProcessedChiptune(ArrayList arrRawChiptune, String strExt) {
+    protected boolean getPreProcessedChiptune(Chiptune chiptune, ArrayList arrRawChiptune, String strExt) {
+        initPlugin();
+
         // Wrapper for below function
         ArrayList<Frame> arrFrames = getPSGRegistersValues(arrRawChiptune, strExt);
 
@@ -72,24 +81,49 @@ public class YmInputPlugin extends InputPlugin {
         // Special FX info
         boolean blnDigiDrums = (list_samples != null) && (list_samples.length > 0);
         if (blnSidVoice || blnSinSid || blnSyncBuzzer || blnDigiDrums)
-            YMC_Tools.info("+ SpecialFX");
-        if (blnSidVoice) YMC_Tools.info("  - Sid Voices");
-        if (blnSinSid) YMC_Tools.info("  - Sinus Sid");
-        if (blnSyncBuzzer) YMC_Tools.info("  - Sync Buzzer");
-        if (blnDigiDrums) YMC_Tools.info("  - Digidrums");
+            Tools.info("+ SpecialFX");
+        if (blnSidVoice) Tools.info("  - Sid Voices");
+        if (blnSinSid) Tools.info("  - Sinus Sid");
+        if (blnSyncBuzzer) Tools.info("  - Sync Buzzer");
+        if (blnDigiDrums) Tools.info("  - Digidrums");
 
 
         // return if errors
-        if (arrFrames == null) return null;
+        if (arrFrames == null) return false;
 
-        return new Chiptune(strSongName,
-                strAuthorName,
-                arrFrames,
-                intPlayRate,
-                intFrequency.longValue(),
-                blnLoop,
-                intLoopVBL,
-                list_samples);
+        chiptune.setStrSongName(strSongName);
+        chiptune.setStrAuthorName(strAuthorName);
+        chiptune.setArrFrame(arrFrames);
+        chiptune.setPlayRate(intPlayRate);
+        chiptune.setFrequency(intFrequency);
+        chiptune.setBlnLoop(blnLoop);
+        chiptune.setLoopVBL(intLoopVBL);
+        chiptune.setArrSamples(list_samples);
+
+        // chiptune loaded OK
+        return true;
+    }
+
+    protected void initPlugin() {
+        strSongName = null;
+        strAuthorName = null;
+        intFrequency = Tools.YM_ATARI_FREQUENCY;
+        intLoopVBL = 0L;
+        blnLoop = false;
+        intPlayRate = Tools.CPC_REPLAY_FREQUENCY;
+
+        // Samples
+        arrDigiDrums = null;
+
+        // redirect Samples (trim unused samples)
+        total_sample = 0;
+        sampleRedirect = null;
+        blSampleUsed = null;
+
+        // SpecialFX log
+        blnSidVoice = false;
+        blnSinSid = false;
+        blnSyncBuzzer = false;
     }
 
     /**
@@ -102,181 +136,185 @@ public class YmInputPlugin extends InputPlugin {
      * @return ArrayList that should contain the PSG registers' values.
      */
     protected ArrayList<Frame> getPSGRegistersValues(ArrayList arrRawChiptune, String strExt) {
-        int intNbRegisters = YMC_Tools.CPC_REGISTERS;
+        int intNbRegisters = Tools.CPC_REGISTERS;
         ArrayList<Byte> arrRegistersValues = null;
 
         // Get type of file
-        strFileType = YMC_Tools.getString(arrRawChiptune, 0, 4);
-        if (strFileType.equals("YM2!")) {
-            // Load YM2 digidrums
-            FileInputStream file_input;
-            try {
-                file_input = new FileInputStream(YM2_DIGIDRUM_FILE);
+        strFileType = Tools.getString(arrRawChiptune, 0, 4);
+        switch (strFileType) {
+            case "YM2!":
+                // Load YM2 digidrums
+                FileInputStream file_input;
+                try {
+                    file_input = new FileInputStream(YM2_DIGIDRUM_FILE);
 
-                int sample = 0;
+                    int sample = 0;
 
-                while (sample < 40) {
-                    file_input.read(sampleAdress[sample]);
-                    sample++;
+                    while (sample < 40) {
+                        file_input.read(sampleAdress[sample]);
+                        sample++;
+                    }
+
+                    // init redirect array
+                    sampleRedirect = new int[40];
+                    blSampleUsed = new boolean[40];
+                    for (int i = 0; i < sampleRedirect.length; i++) blSampleUsed[i] = false;
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                // Set Frequency of song to 2000000 (atari)
+                intFrequency = Tools.YM_ATARI_FREQUENCY;
+
+                // get rid of the header string
+                arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(4, arrRawChiptune.size()));
+                break;
+            case "YM3!":
+                // Set Frequency of song to 2000000 (atari)
+                intFrequency = Tools.YM_ATARI_FREQUENCY;
+
+                // get rid of the header string
+                arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(4, arrRawChiptune.size()));
+                break;
+            case "YM3b":
+                // Set Frequency of song to 2000000 (atari)
+                intFrequency = Tools.YM_ATARI_FREQUENCY;
+
+                // get rid of the header string and the VBL loop
+                arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(4, arrRawChiptune.size() - 4));
+                break;
+            case "YM5!":
+            case "YM6!":
+                // Set number of registers
+                intNbRegisters = 16;
+
+                long intVBL = Tools.getBEInt(arrRawChiptune, 12);
+                Long intAttributes = Tools.getBEInt(arrRawChiptune, 16);
+                Integer shtDigiDrum = Tools.getBEShort(arrRawChiptune, 20);
+                intFrequency = Tools.getBEInt(arrRawChiptune, 22);
+                Integer shtPlayerFrequency = Tools.getBEShort(arrRawChiptune, 26);
+                intLoopVBL = Tools.getBEInt(arrRawChiptune, 28);
+                Tools.info("+ VBL = 0x" + Long.toHexString(intVBL).toUpperCase() + " (~" + intVBL / 50 + " seconds)");
+                Tools.info("+ Number of DigiDrum = " + shtDigiDrum);
+                Tools.info("+ Frequency = " + intFrequency + " Hz");
+                Tools.info("+ Player Frequency = " + shtPlayerFrequency + " Hz");
+                Tools.info("+ Loop VBL = " + Long.toHexString(intLoopVBL).toUpperCase());
+
+                /*
+                 * Attributes
+                 */
+                Tools.info("+ Attributes = 0x" + Long.toHexString(intAttributes).toUpperCase());
+                boolean isInterleaved = false;
+                boolean areSampleSigned = false;
+                boolean areSample4Bits = false;
+
+                // Interleaved ?
+                if (((intAttributes & A_STREAMINTERLEAVED) == 0))
+                    Tools.info("  - YM file is uninterleaved");
+                else {
+                    Tools.info("  - YM file is interleaved");
+                    isInterleaved = true;
+                }
+
+                // DIGIDRUM signed ?
+                if (((intAttributes & A_DRUMSIGNED) == 0)) Tools.info("  - Digidrums are unsigned");
+                else {
+                    Tools.info("  - Digidrums are signed");
+                    areSampleSigned = true;
+                }
+
+                // 4bit DIGIDRUM
+                if (((intAttributes & A_DRUM4BITS) == 0))
+                    Tools.info("  - Digidrums resolution is 8bits");
+                else {
+                    Tools.info("  - Digidrums resolution is 4bits");
+                    areSample4Bits = true;
+                }
+
+                // Loop mode ?
+                if (((intAttributes & A_LOOPMODE) == 0)) Tools.info("  - Loop mode OFF");
+                else {
+                    Tools.info("  - Loop mode ON");
+                    blnLoop = true;
+                }
+
+                // Time Control ?
+                if (((intAttributes & A_TIMECONTROL) == 0)) Tools.info("  - Time Control OFF");
+                else Tools.info("  - Time Control ON");
+
+                // Playing rate adjustment (60hz <-> 50hz)
+                intPlayRate = shtPlayerFrequency;
+
+                // get digidrums
+                int intOffset = 34;
+                arrDigiDrums = new Sample[shtDigiDrum];
+                for (int i = 0; i < shtDigiDrum; i++) {
+                    Long intSizeDD = Tools.getBEInt(arrRawChiptune, intOffset);
+                    intOffset += 4;
+
+                    byte[] arrDigi = new byte[intSizeDD.intValue()];
+                    for (int j = 0; j < intSizeDD.intValue(); j++) {
+                        byte bDD = (Byte) arrRawChiptune.get(intOffset++);
+                        arrDigi[j] = bDD;
+                    }
+                    arrDigiDrums[i] = new Sample(String.valueOf(i),
+                            intSizeDD.intValue(),
+                            (byte) ((areSample4Bits == true) ? 4 : 8),
+                            areSampleSigned,
+                            (byte) 0,
+                            (byte) 0xF,
+                            0,
+                            0,
+                            arrDigi);
+
+                    // debug
+                    Tools.debug("- DigiDrums (" + i + ") size = " + intSizeDD);
                 }
 
                 // init redirect array
-                sampleRedirect = new int[40];
-                blSampleUsed = new boolean[40];
+                sampleRedirect = new int[shtDigiDrum];
+                blSampleUsed = new boolean[shtDigiDrum];
                 for (int i = 0; i < sampleRedirect.length; i++) blSampleUsed[i] = false;
 
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                // Other Info
+                strSongName = Tools.getNTString(arrRawChiptune, intOffset, false);
+                strAuthorName = Tools.getNTString(arrRawChiptune, intOffset += strSongName.length() + 1, false);
+                String strComments = Tools.getNTString(arrRawChiptune, intOffset += strAuthorName.length() + 1, false);
+                Tools.info("+ Song Name = " + strSongName);
+                Tools.info("+ Author = " + strAuthorName);
+                Tools.info("+ Comments = " + strComments);
 
-            // Set Frequency of song to 2000000 (atari)
-            intFrequency = new Long(YMC_Tools.YM_ATARI_FREQUENCY);
+                // Offset points to data
+                intOffset += strComments.length() + 1;
 
-            // get rid of the header string
-            arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(4, arrRawChiptune.size()));
-        } else if (strFileType.equals("YM3!")) {
-            // Set Frequency of song to 2000000 (atari)
-            intFrequency = new Long(YMC_Tools.YM_ATARI_FREQUENCY);
+                // return sub-array (minus 4 bytes for 'End!')
+                int intTailer = 0;
+                if (Tools.getString(arrRawChiptune, arrRawChiptune.size() - 4, 4).equals("End!")) intTailer = 4;
+                arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(intOffset, arrRawChiptune.size() - intTailer));
 
-            // get rid of the header string
-            arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(4, arrRawChiptune.size()));
-        } else if (strFileType.equals("YM3b")) {
-            // Set Frequency of song to 2000000 (atari)
-            intFrequency = new Long(YMC_Tools.YM_ATARI_FREQUENCY);
-
-            // get rid of the header string and the VBL loop
-            arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(4, arrRawChiptune.size() - 4));
-        } else if (strFileType.equals("YM5!")
-                || strFileType.equals("YM6!")) {
-            // Set number of registers
-            intNbRegisters = 16;
-
-            Long intVBL = YMC_Tools.getBEInt(arrRawChiptune, 12);
-            Long intAttributes = YMC_Tools.getBEInt(arrRawChiptune, 16);
-            Integer shtDigiDrum = YMC_Tools.getBEShort(arrRawChiptune, 20);
-            intFrequency = YMC_Tools.getBEInt(arrRawChiptune, 22);
-            Integer shtPlayerFrequency = YMC_Tools.getBEShort(arrRawChiptune, 26);
-            intLoopVBL = YMC_Tools.getBEInt(arrRawChiptune, 28);
-            YMC_Tools.info("+ VBL = 0x" + Long.toHexString(intVBL.longValue()).toUpperCase() + " (~" + intVBL.longValue() / 50 + " seconds)");
-            YMC_Tools.info("+ Number of DigiDrum = " + shtDigiDrum);
-            YMC_Tools.info("+ Frequency = " + intFrequency + " Hz");
-            YMC_Tools.info("+ Player Frequency = " + shtPlayerFrequency + " Hz");
-            YMC_Tools.info("+ Loop VBL = " + Long.toHexString(intLoopVBL.longValue()).toUpperCase());
-
-            /**
-             * Attributes
-             * */
-            YMC_Tools.info("+ Attributes = 0x" + Long.toHexString(intAttributes.longValue()).toUpperCase());
-            boolean isInterleaved = false;
-            boolean areSampleSigned = false;
-            boolean areSample4Bits = false;
-
-            // Interleaved ?
-            if (((intAttributes.longValue() & A_STREAMINTERLEAVED) == 0))
-                YMC_Tools.info("  - YM file is uninterleaved");
-            else {
-                YMC_Tools.info("  - YM file is interleaved");
-                isInterleaved = true;
-            }
-
-            // DIGIDRUM signed ?
-            if (((intAttributes.longValue() & A_DRUMSIGNED) == 0)) YMC_Tools.info("  - Digidrums are unsigned");
-            else {
-                YMC_Tools.info("  - Digidrums are signed");
-                areSampleSigned = true;
-            }
-
-            // 4bit DIGIDRUM
-            if (((intAttributes.longValue() & A_DRUM4BITS) == 0)) YMC_Tools.info("  - Digidrums resolution is 8bits");
-            else {
-                YMC_Tools.info("  - Digidrums resolution is 4bits");
-                areSample4Bits = true;
-            }
-
-            // Loop mode ?
-            if (((intAttributes.longValue() & A_LOOPMODE) == 0)) YMC_Tools.info("  - Loop mode OFF");
-            else {
-                YMC_Tools.info("  - Loop mode ON");
-                blnLoop = true;
-            }
-
-            // Time Control ?
-            if (((intAttributes.longValue() & A_TIMECONTROL) == 0)) YMC_Tools.info("  - Time Control OFF");
-            else YMC_Tools.info("  - Time Control ON");
-
-            // Playing rate adjustment (60hz <-> 50hz)
-            intPlayRate = shtPlayerFrequency;
-
-            // get digidrums
-            int intOffset = 34;
-            arrDigiDrums = new Sample[shtDigiDrum.intValue()];
-            for (int i = 0; i < shtDigiDrum.intValue(); i++) {
-                Long intSizeDD = YMC_Tools.getBEInt(arrRawChiptune, intOffset);
-                intOffset += 4;
-
-                byte[] arrDigi = new byte[intSizeDD.intValue()];
-                for (int j = 0; j < intSizeDD.intValue(); j++) {
-                    byte bDD = ((Byte) arrRawChiptune.get(intOffset++)).byteValue();
-                    arrDigi[j] = bDD;
-                }
-                arrDigiDrums[i] = new Sample(String.valueOf(i),
-                        intSizeDD.intValue(),
-                        (byte) ((areSample4Bits == true) ? 4 : 8),
-                        areSampleSigned,
-                        (byte) 0,
-                        (byte) 0xF,
-                        0,
-                        0,
-                        arrDigi);
-
-                // debug
-                YMC_Tools.debug("- DigiDrums (" + i + ") size = " + intSizeDD);
-            }
-
-            // init redirect array
-            sampleRedirect = new int[shtDigiDrum.intValue()];
-            blSampleUsed = new boolean[shtDigiDrum.intValue()];
-            for (int i = 0; i < sampleRedirect.length; i++) blSampleUsed[i] = false;
-
-            // Other Info
-            strSongName = YMC_Tools.getNTString(arrRawChiptune, intOffset, false);
-            strAuthorName = YMC_Tools.getNTString(arrRawChiptune, intOffset += strSongName.length() + 1, false);
-            String strComments = YMC_Tools.getNTString(arrRawChiptune, intOffset += strAuthorName.length() + 1, false);
-            YMC_Tools.info("+ Song Name = " + strSongName);
-            YMC_Tools.info("+ Author = " + strAuthorName);
-            YMC_Tools.info("+ Comments = " + strComments);
-
-            // Offset points to data
-            intOffset += strComments.length() + 1;
-
-            // return sub-array (minus 4 bytes for 'End!')
-            int intTailer = 0;
-            if (YMC_Tools.getString(arrRawChiptune, arrRawChiptune.size() - 4, 4).equals("End!")) intTailer = 4;
-            arrRegistersValues = new ArrayList<Byte>(arrRawChiptune.subList(intOffset, arrRawChiptune.size() - intTailer));
-
-            // Interleave file if it is not
-            if (!isInterleaved) {
-                // Interleave data (set all data for R0 then all for R1 ...)
-                ArrayList<Byte> arrInterleavedRawChiptune = new ArrayList();
-                for (int reg = 0; reg < intNbRegisters; reg++) {
-                    for (int i = 0; i < intVBL.longValue(); i++) {
-                        arrInterleavedRawChiptune.add(arrRegistersValues.get(i * intNbRegisters + reg));
+                // Interleave file if it is not
+                if (!isInterleaved) {
+                    // Interleave data (set all data for R0 then all for R1 ...)
+                    ArrayList<Byte> arrInterleavedRawChiptune = new ArrayList();
+                    for (int reg = 0; reg < intNbRegisters; reg++) {
+                        for (int i = 0; i < intVBL; i++) {
+                            arrInterleavedRawChiptune.add(arrRegistersValues.get(i * intNbRegisters + reg));
+                        }
                     }
+                    arrRegistersValues = arrInterleavedRawChiptune;
                 }
-                arrRegistersValues = arrInterleavedRawChiptune;
-            }
 
-            // Extra log : Offsets in original YM file
-            for (int i = 0; i < intNbRegisters; i++)
-                YMC_Tools.debug("Offset reg " + i + ": " + (i * (arrRegistersValues.size() / intNbRegisters) + intOffset));
+                // Extra log : Offsets in original YM file
+                for (int i = 0; i < intNbRegisters; i++)
+                    Tools.debug("Offset reg " + i + ": " + (i * (arrRegistersValues.size() / intNbRegisters) + intOffset));
+                break;
         }
 
         // return if not an YM file
         if (arrRegistersValues == null) return null;
 
-        /**
+        /*
          * Create array Frame
          */
         int intFileSize = arrRegistersValues.size();
@@ -286,22 +324,22 @@ public class YmInputPlugin extends InputPlugin {
         //if (arrSampleLog == null)  arrSampleLog = new ArrayList<SampleInstance[]>();
 
         //	Get array of bytes during next loop
-        byte arrPSGRead[] = new byte[intNbRegisters];
-        byte arrPSG[] = new byte[YMC_Tools.CPC_REGISTERS];
+        byte[] arrPSGRead = new byte[intNbRegisters];
+        byte[] arrPSG = new byte[Tools.CPC_REGISTERS];
 
         // Cut the big array into an Array of Frames
         ArrayList<Frame> arrFrame = new ArrayList<Frame>();
         for (int j = 0; j < intNbFrames; j++) {
             //	Get array of bytes
             for (int i = 0; i < intNbRegisters; i++)
-                arrPSGRead[i] = arrRegistersValues.get(i * intNbFrames + j).byteValue();
+                arrPSGRead[i] = arrRegistersValues.get(i * intNbFrames + j);
 
             // Copy registers 0-10
             for (byte reg = 0; reg < 11; reg++) arrPSG[reg] = arrPSGRead[reg];
 
             // Get Special FX
             //arrSampleLog.add(new SampleInstance[3]);
-            SampleInstance arrSI[] = blnReadFX(arrPSG, arrPSGRead/*, j*/);
+            SampleInstance[] arrSI = blnReadFX(arrPSG, arrPSGRead/*, j*/);
 
             int dbFreq0 = arrPSG[1] & 0xF;
             dbFreq0 <<= 8;
@@ -400,11 +438,11 @@ public class YmInputPlugin extends InputPlugin {
     }
 
     private SampleInstance[] blnReadFX(byte[] arrRegs, byte[] arrRegsRead/*, int pos*/) {
-        SampleInstance arrSI[] = new SampleInstance[]{null, null, null};
+        SampleInstance[] arrSI = new SampleInstance[]{null, null, null};
         if (strFileType.equals("YM2!")) {
             readYm2Effect(arrSI, arrRegs, arrRegsRead/*, pos*/);
         } else {
-            for (byte reg = 11; reg < YMC_Tools.CPC_REGISTERS; reg++) arrRegs[reg] = arrRegsRead[reg];
+            for (byte reg = 11; reg < Tools.CPC_REGISTERS; reg++) arrRegs[reg] = arrRegsRead[reg];
             if (strFileType.equals("YM6!")) {
                 readYm6Effect(arrSI, arrRegsRead/*, pos*/, 1, 6, 14);
                 readYm6Effect(arrSI, arrRegsRead/*, pos*/, 3, 8, 15);
@@ -450,7 +488,7 @@ public class YmInputPlugin extends InputPlugin {
                 // Log digidrum
                 arrSI[2] = new SampleInstance(SpecialFXType.ATARI_DIGIDRUM, sampleRedirect[sampleNum], 1, arrRegsRead[12] & 0xFF, 0);
                 //arrSampleLog.get(pos)[2] = new SampleInstance(SampleInstance.FX_TYPE_ATARI_DIGIDRUM, sampleRedirect[sampleNum], 1, arrRegsRead[12] & 0xFF);
-                YMC_Tools.debug("Sample " + sampleNum + " " + MFP_CLOCK / (4 * (arrRegsRead[12] & 0xFF)) + "Hz");
+                Tools.debug("Sample " + sampleNum + " " + MFP_CLOCK / (4 * (arrRegsRead[12] & 0xFF)) + "Hz");
             }
         }
 
@@ -575,7 +613,7 @@ public class YmInputPlugin extends InputPlugin {
                                     count,
                                     nbFx);
                         } else {
-                            YMC_Tools.debug("+ SinSid Sound [" + voice + ", " + Vmax + ", " + tmpFreq + "]");
+                            Tools.debug("+ SinSid Sound [" + voice + ", " + Vmax + ", " + tmpFreq + "]");
                             arrSI[voice] = new SampleInstance(SpecialFXType.ATARI_SINSID,
                                     Vmax,
                                     prediv,
@@ -615,7 +653,7 @@ public class YmInputPlugin extends InputPlugin {
                         blnSpecialFX = true;
                         tmpFreq = MFP_CLOCK / tmpFreq;
                         int Env = (pReg[voice + 8] & 15);
-                        YMC_Tools.debug("+ Sync-Buzzer [" + Env + ", " + tmpFreq + "]");
+                        Tools.debug("+ Sync-Buzzer [" + Env + ", " + tmpFreq + "]");
                         arrSI[voice] = new SampleInstance(SpecialFXType.ATARI_SYNCBUZZER,
                                 Env,
                                 prediv,
@@ -626,5 +664,10 @@ public class YmInputPlugin extends InputPlugin {
             }
         }
         return blnSpecialFX;
+    }
+
+    @Override
+    public String getMenuLabel() {
+        return "YM Format";
     }
 }

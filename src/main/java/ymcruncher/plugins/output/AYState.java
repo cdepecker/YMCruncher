@@ -1,4 +1,6 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.output;
+
+import ymcruncher.core.SpecialFXType;
 
 import java.util.Arrays;
 

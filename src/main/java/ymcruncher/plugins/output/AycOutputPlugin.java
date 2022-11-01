@@ -1,9 +1,9 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.output;
 
 import ymcruncher.core.Chiptune;
 import ymcruncher.core.Frame;
 import ymcruncher.core.OutputPlugin;
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import com.google.auto.service.AutoService;
+import ymcruncher.core.Sample;
+import ymcruncher.core.SampleInstance;
 
 /**
  * AYC output module.
@@ -94,7 +96,7 @@ public class AycOutputPlugin extends OutputPlugin {
     private static final String PARAM_AYL_DEFAULT_CHANNEL = "AYL Default Channel";
     private static final String PARAM_SAVE_ATARI_SFX_REGS = "Save Atari SpecialFX Registers";
     private static final String PARAM_SAVE_REGS_IN_SEPARATE_FILES = "Save Registers in Separate Files";
-    private static final String PARAM_CHANNELS_ORDER = "_Channels Ordering";
+    private static final String PARAM_CHANNELS_ORDER = "Channels Ordering";
     private static String AYC_COMMENTS = "Converted using main.YMCruncher";
     private static byte AYC_VERSION = 0x00;
     private static byte AYC_EXT_HEADER_PTR = 0x32;
@@ -125,18 +127,18 @@ public class AycOutputPlugin extends OutputPlugin {
         // Init Boolean parameters
         //setBooleanOption(PARAM_DIV_VOL, new Boolean(true));
         //setBooleanOption(PARAM_EXTENDED_HEADER, new Boolean(false));
-        setBooleanOption(PARAM_SAVE_DIGIDRUMS_AYL, new Boolean(true));
+        setBooleanOption(PARAM_SAVE_DIGIDRUMS_AYL, Boolean.TRUE);
         setListOption(PARAM_AYL_DEFAULT_CHANNEL, new String[]{CHANNEL_A, CHANNEL_B, CHANNEL_C}, 2, true);
 
         // Trick to space options
-        setListOption(PARAM_AYL_DEFAULT_CHANNEL + "SPACE", null, 0, false);
+//        setListOption(PARAM_AYL_DEFAULT_CHANNEL + "SPACE", null, 0, false);
 
-        setBooleanOption(PARAM_SAVE_ATARI_SFX_REGS, new Boolean(false));
-        for (int i = 0; i < YMC_Tools.YM_REGISTERS; i++)
+        setBooleanOption(PARAM_SAVE_ATARI_SFX_REGS, Boolean.FALSE);
+        for (int i = 0; i < Tools.YM_REGISTERS; i++)
             setListOption(PARAM_BUFFSIZE_REG + ((i < 10) ? "0" : "") + i, new String[]{BUFF_SIZE_AUTO, BUFF_SIZE_0x100, BUFF_SIZE_0x400}, 0, true);
 
         // Should we save all registers in separate files ?
-        setBooleanOption(PARAM_SAVE_REGS_IN_SEPARATE_FILES, new Boolean(false));
+        setBooleanOption(PARAM_SAVE_REGS_IN_SEPARATE_FILES, Boolean.FALSE);
     }
 
     /**
@@ -326,15 +328,15 @@ public class AycOutputPlugin extends OutputPlugin {
 
         // Print Infos:
         //debug("  - Old Size : " + arrRawData.size());
-        YMC_Tools.debug("  - BufferSize : 0x" + Long.toHexString(intBuffSize).toUpperCase() + " bytes");
-        YMC_Tools.debug("  - New Size : " + arrCrunchedData.size() + " bytes");
-        YMC_Tools.debug("  - Compression ratio ~ " + (float) arrCrunchedData.size() * 100 / arrRawData.size() + " %");
+        Tools.debug("  - BufferSize : 0x" + Long.toHexString(intBuffSize).toUpperCase() + " bytes");
+        Tools.debug("  - New Size : " + arrCrunchedData.size() + " bytes");
+        Tools.debug("  - Compression ratio ~ " + (float) arrCrunchedData.size() * 100 / arrRawData.size() + " %");
 
         // stats
-        YMC_Tools.debug("  ! Nb Flags : " + nbFlag);
-        YMC_Tools.debug("  ! Nb PreviousSeq : " + nbPreviousSeq);
-        YMC_Tools.debug("  ! Nb Chars : " + nbChars);
-        YMC_Tools.debug("  ! Nb CharsInPreviousSeq : " + nbCharsInSeq);
+        Tools.debug("  ! Nb Flags : " + nbFlag);
+        Tools.debug("  ! Nb PreviousSeq : " + nbPreviousSeq);
+        Tools.debug("  ! Nb Chars : " + nbChars);
+        Tools.debug("  ! Nb CharsInPreviousSeq : " + nbCharsInSeq);
 
         // return Crunched ArrayList
         return arrCrunchedData;
@@ -353,7 +355,7 @@ public class AycOutputPlugin extends OutputPlugin {
     public ArrayList<Byte> doCrunch(String strDestFile, Chiptune chiptune) {
 
         // Save additions YM registers ?
-        int nbRegs = getBooleanOption(PARAM_SAVE_ATARI_SFX_REGS) ? YMC_Tools.YM_REGISTERS : YMC_Tools.CPC_REGISTERS;
+        int nbRegs = getBooleanOption(PARAM_SAVE_ATARI_SFX_REGS) ? Tools.YM_REGISTERS : Tools.CPC_REGISTERS;
 
         // The Following array contains 14 or 16 ArrayList of Bytes (one for each CPC PSG register)
         ArrayList<Byte> arrRegs[] = new ArrayList[nbRegs];
@@ -404,7 +406,7 @@ public class AycOutputPlugin extends OutputPlugin {
         //byte sample_number[] = {0,0,0};
 
         // Debug values
-        double minRate[] = {YMC_Tools.YM_CPC_FREQUENCY, YMC_Tools.YM_CPC_FREQUENCY, YMC_Tools.YM_CPC_FREQUENCY};
+        double minRate[] = {Tools.YM_CPC_FREQUENCY, Tools.YM_CPC_FREQUENCY, Tools.YM_CPC_FREQUENCY};
         double maxRate[] = {0, 0, 0};
 
         // IceAge Hack
@@ -640,8 +642,8 @@ public class AycOutputPlugin extends OutputPlugin {
 
         // Debug effects rate
         for (int voice = 0; voice < 3; voice++) {
-            YMC_Tools.info("Channel " + voice + " FXs Min Rate : " + minRate[voice]);
-            YMC_Tools.info("Channel " + voice + " FXs Max Rate : " + maxRate[voice]);
+            Tools.info("Channel " + voice + " FXs Min Rate : " + minRate[voice]);
+            Tools.info("Channel " + voice + " FXs Max Rate : " + maxRate[voice]);
         }
 
         // Process each Register
@@ -651,7 +653,7 @@ public class AycOutputPlugin extends OutputPlugin {
         int intRawSize = chiptune.getLength() * nbRegs;
         int sum = 0;
         for (int curr_register = 0; curr_register < arrRegs.length; curr_register++) {
-            YMC_Tools.debug("+ Process Register " + curr_register);
+            Tools.debug("+ Process Register " + curr_register);
 
             byte bytBuffLen = 0x01;
             ArrayList arrCrunchedData = null;
@@ -708,9 +710,9 @@ public class AycOutputPlugin extends OutputPlugin {
         }
 
         // Printing various Info
-        YMC_Tools.debug("+ Total Raw Size = " + intRawSize + " bytes");
-        YMC_Tools.debug("+ Total Compressed Size = " + sum + " bytes");
-        YMC_Tools.info("+ Compression ratio ~ " + (float) sum * 100 / intRawSize + " %");
+        Tools.debug("+ Total Raw Size = " + intRawSize + " bytes");
+        Tools.debug("+ Total Compressed Size = " + sum + " bytes");
+        Tools.info("+ Compression ratio ~ " + (float) sum * 100 / intRawSize + " %");
 
 
         /**
@@ -775,11 +777,11 @@ public class AycOutputPlugin extends OutputPlugin {
         }
 
         // Add Dummy values for 14,15 Registers' Offset
-        if (nbRegs == YMC_Tools.CPC_REGISTERS)
+        if (nbRegs == Tools.CPC_REGISTERS)
             for (byte b = 0; b < 6; b++) arrYmBytes.add(new Byte((byte) 0xFF));
 
         // Log buffer size needed for the AYC to be decrunched
-        YMC_Tools.info("+ Buffer size needed during decrunching : 0x" + Integer.toHexString(buffSize << 8).toUpperCase());
+        Tools.info("+ Buffer size needed during decrunching : 0x" + Integer.toHexString(buffSize << 8).toUpperCase());
 
         // We just reserve the place for the Extended header
         if (getBooleanOption(PARAM_EXTENDED_HEADER)) addLEvar(arrYmBytes, 0, 2);
@@ -920,7 +922,7 @@ public class AycOutputPlugin extends OutputPlugin {
                                     if (shtPause > 4096) {
                                         bytPauseLow = (byte) (0xFF);    // Set Pause to 4095 * HBL
                                         bytPauseHigh = (byte) (0xF);
-                                        YMC_Tools.info("!!! Pause > 4096");
+                                        Tools.info("!!! Pause > 4096");
                                     } else {
                                         bytPauseLow = (byte) ((shtPause) & 0xFF);
                                         bytPauseHigh = (byte) (((shtPause) >> 8) & 0xF);
@@ -974,7 +976,7 @@ public class AycOutputPlugin extends OutputPlugin {
                     file_output_vanilla.close();
 
                     // Log drum length
-                    YMC_Tools.info("+ Digidrum " + i + " size = 0x" + Integer.toHexString(intDrumLength).toUpperCase());
+                    Tools.info("+ Digidrum " + i + " size = 0x" + Integer.toHexString(intDrumLength).toUpperCase());
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {

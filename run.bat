@@ -1,1 +1,1 @@
-"c:\Program Files\Java\openjdk-11+28_windows-x64_bin\jdk-11\bin\java" -cp target\*;lib\lha.jar;lib\swt.jar -Djava.library.path=lib --module-path "C:\IFSDIR\tools\javafx-sdk-17.0.2\lib" --add-modules javafx.controls ymcruncher.YMCruncher
+"c:\Program Files\Java\openjdk-11+28_windows-x64_bin\jdk-11\bin\java" -cp target\*;lib\lha.jar -Djava.library.path=lib --module-path "C:\IFSDIR\tools\javafx-sdk-17.0.2\lib" --add-modules javafx.controls,javafx.fxml ymcruncher.YMCruncher

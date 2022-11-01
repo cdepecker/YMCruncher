@@ -1,4 +1,4 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.input;
 
 import com.google.auto.service.AutoService;
 import ymcruncher.core.InputPlugin;

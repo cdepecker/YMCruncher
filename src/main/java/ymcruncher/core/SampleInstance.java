@@ -1,4 +1,4 @@
-package ymcruncher.plugins;
+package ymcruncher.core;
 
 /**
  * Sample Instance
@@ -13,7 +13,7 @@ public class SampleInstance {
     final private static long MFP_CLOCK = 2457600L;
 
     // Private data
-    private int sample = 0;
+    private int sample;
     private double rate = 0;
 
     // Special for atari samples (more accurate)
@@ -62,14 +62,10 @@ public class SampleInstance {
 
     public double getRate() {
         if (isAtari() && (tc != 0))
-            return MFP_CLOCK / (tc * mfpPrediv[tp]);
+            return MFP_CLOCK / ((long) tc * mfpPrediv[tp]);
 
         // Not an Atari Sample
         return rate;
-    }
-
-    public void setRate(double rate) {
-        this.rate = rate;
     }
 
     public int getSample() {
@@ -84,16 +80,8 @@ public class SampleInstance {
         return tc;
     }
 
-    public void setTc(int tc) {
-        this.tc = tc;
-    }
-
     public int getTp() {
         return tp;
-    }
-
-    public void setTp(int tp) {
-        this.tp = tp;
     }
 
     public SpecialFXType getType() {
@@ -109,9 +97,5 @@ public class SampleInstance {
      */
     public int getOrigFxNb() {
         return origFxNb;
-    }
-
-    public void setOrigFxNb(int fxNb) {
-        this.origFxNb = fxNb;
     }
 }

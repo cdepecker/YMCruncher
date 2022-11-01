@@ -1,6 +1,6 @@
-package ymcruncher;
+package ymcruncher.wip;
 
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -191,11 +191,11 @@ public class ExtractSamples {
         System.out.println("+ Create Dummy YM file");
 
         // periods
-        long p0 = (YMC_Tools.YM_CPC_FREQUENCY / 16) / 50;
+        long p0 = (Tools.YM_CPC_FREQUENCY / 16) / 50;
         //long p0 = 0;
         //long p1 = (YMC_Tools.YM_CPC_FREQUENCY/16)/35;
         long p1 = 0;
-        long p2 = (YMC_Tools.YM_CPC_FREQUENCY / 256) / (440 * 2);    // 200hz (8 periods, 4 visible)
+        long p2 = (Tools.YM_CPC_FREQUENCY / 256) / (440 * 2);    // 200hz (8 periods, 4 visible)
         int intVBL = 50 * 10; // 10 secondes
 
         // First Tick (Period changes)
@@ -245,7 +245,7 @@ public class ExtractSamples {
         addBEvar(arrYmBytes, intVBL, 4); // NbFrames
         addBEvar(arrYmBytes, 0, 4); // Attributes
         addBEvar(arrYmBytes, 0, 2); // Nb of Samples
-        addBEvar(arrYmBytes, YMC_Tools.YM_CPC_FREQUENCY, 4); // 1000000hz
+        addBEvar(arrYmBytes, Tools.YM_CPC_FREQUENCY, 4); // 1000000hz
         addBEvar(arrYmBytes, 50, 2); // 50hz
         addBEvar(arrYmBytes, 0, 4); // Loop frame
         addBEvar(arrYmBytes, 0, 2); // Additional data

@@ -1,4 +1,4 @@
-package ymcruncher.core;
+package ymcruncher.gui;
 
 // SWT
 
@@ -37,7 +37,12 @@ import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
-import ymcruncher.plugins.SpecialFXType;
+import ymcruncher.core.Chiptune;
+import ymcruncher.core.OutputPlugin;
+import ymcruncher.core.SpecialFXType;
+import ymcruncher.core.YMC_Edit;
+import ymcruncher.core.Model;
+import ymcruncher.core.Tools;
 
 import java.io.File;
 import java.io.IOException;
@@ -322,7 +327,7 @@ public class YMC_View implements Observer {
             public void treeExpanded(final TreeEvent e) {
                 final TreeItem item = (TreeItem) e.item;
                 final String strFullPath = item.getItem(0).getText();
-                final Chiptune chiptune = model.getChiptune(strFullPath);
+                final Chiptune chiptune = model.loadChiptune(strFullPath);
 
                 // Add branch only if it hasn't been expanded yet
                 if (!chiptune.isLoaded() && item.getItemCount() <= 1) {
@@ -358,7 +363,7 @@ public class YMC_View implements Observer {
                 if (lstSourceFiles.getSelectionCount() == 1) {
                     final TreeItem item = lstSourceFiles.getSelection()[0];
                     final String strFullPath = item.getItem(0).getText();
-                    final Chiptune chiptune = model.getChiptune(strFullPath);
+                    final Chiptune chiptune = model.loadChiptune(strFullPath);
                     final YMC_Edit editFrame = new YMC_Edit(shell, chiptune, model);
                     editFrame.displayWindow();
                 }
@@ -779,7 +784,7 @@ public class YMC_View implements Observer {
             enableButtons(false);
 
             // Perform Crunch operation
-            model.crunchList(strPath/* , outputPlugin */);
+            model.crunchList(/*strPath*/);
 
             // Enable Buttons
             updateLabel("finished.");

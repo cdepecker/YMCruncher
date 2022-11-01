@@ -1,10 +1,12 @@
-package ymcruncher.plugins;
+package ymcruncher.plugins.output;
 
 import com.google.auto.service.AutoService;
 import ymcruncher.core.Chiptune;
 import ymcruncher.core.Frame;
 import ymcruncher.core.OutputPlugin;
-import ymcruncher.core.YMC_Tools;
+import ymcruncher.core.Tools;
+import ymcruncher.core.Sample;
+import ymcruncher.core.SampleInstance;
 
 import java.util.ArrayList;
 
@@ -208,8 +210,8 @@ public class YmOutputPlugin extends OutputPlugin {
                     }
 
                     // DEBUG
-                    if (nbRegOnThisRow == 0) YMC_Tools.debug("+ Tick : " + i);
-                    YMC_Tools.debug("  - voice : " + c + ", sample" + curr_sample.getSample() + " " + MFP_CLOCK / (timer_count * mfpPrediv[prediv_indice]) + "hz (original=" + curr_sample.getRate() + ")");
+                    if (nbRegOnThisRow == 0) Tools.debug("+ Tick : " + i);
+                    Tools.debug("  - voice : " + c + ", sample" + curr_sample.getSample() + " " + MFP_CLOCK / (timer_count * mfpPrediv[prediv_indice]) + "hz (original=" + curr_sample.getRate() + ")");
 
                     // increase the number of Digidrums on this row
                     nbRegOnThisRow++;
@@ -224,7 +226,7 @@ public class YmOutputPlugin extends OutputPlugin {
                     arrYmBytes.add(arrPSG16[j][i]);
 
                 // Notify ratio Completion
-                setCompletionRatio(i * 100 / (YMC_Tools.CPC_REGISTERS + 1));
+                setCompletionRatio(i * 100 / (Tools.CPC_REGISTERS + 1));
             }
         else // Data (Uninterleaved format)
             for (int j = 0; j < chiptune.getLength(); j++) {
